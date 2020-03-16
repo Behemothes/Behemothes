@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://behemothes.github.io/Behemothes/</id>
     <title>Gridea</title>
-    <updated>2020-03-16T15:01:57.144Z</updated>
+    <updated>2020-03-16T15:02:53.537Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://behemothes.github.io/Behemothes/"/>
     <link rel="self" href="https://behemothes.github.io/Behemothes/atom.xml"/>
@@ -16,8 +16,7 @@
         <link href="https://behemothes.github.io/Behemothes/post/rang-wo-yi-yan-nan-jin-de-nat-1/">
         </link>
         <updated>2020-03-16T09:04:15.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="聊一聊让我一言难尽的nat-1">聊一聊让我一言难尽的NAT (1)</h1>
-<h2 id="写在开始之前">写在开始之前</h2>
+        <content type="html"><![CDATA[<h2 id="写在开始之前">写在开始之前</h2>
 <h3 id="前言">前言</h3>
 <p>这个话题的大纲2019.12.22就写好了，但是最近才开始动笔，没办法-懒。</p>
 <p>为什么写NAT这个题材呢？</p>
