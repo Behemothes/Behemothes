@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://behemothes.github.io/Behemothes/</id>
     <title>Gridea</title>
-    <updated>2020-03-16T08:11:53.168Z</updated>
+    <updated>2020-03-16T08:46:14.368Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://behemothes.github.io/Behemothes/"/>
     <link rel="self" href="https://behemothes.github.io/Behemothes/atom.xml"/>
@@ -10,6 +10,76 @@
     <logo>https://behemothes.github.io/Behemothes/images/avatar.png</logo>
     <icon>https://behemothes.github.io/Behemothes/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[使用python登录交换机并自动创建账户]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/shi-yong-python-deng-lu-jiao-huan-ji-bing-zi-dong-chuang-jian-zhang-hu/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/shi-yong-python-deng-lu-jiao-huan-ji-bing-zi-dong-chuang-jian-zhang-hu/">
+        </link>
+        <updated>2020-03-16T08:40:58.000Z</updated>
+        <content type="html"><![CDATA[<pre><code class="language-python">import logging
+import telnetlib
+import time
+import datetime
+
+class telnetclient():
+    def __init__(self,host_ip):
+        self.tn = telnetlib.Telnet()
+        self.host_ip = host_ip
+    def login_H3C_SW(self,username,password):
+        try:
+            self.tn.open(self.host_ip,port =23,timeout = 3)
+        except:
+            logging.warning(f'{self.host_ip} connect failed!')
+            return False
+
+        self.tn.read_until(b'login:',timeout = 10)
+        self.tn.write(username.encode('ascii')+b'\n')
+
+        time.sleep(1)
+
+        self.tn.read_until(b'Password:',timeout = 10)
+        self.tn.write(password.encode('ascii')+b'\n')
+
+        time.sleep(2)
+
+        login_result = self.tn.read_very_eager().decode('ascii')
+
+        if 'Login failed.' not in login_result:
+            logging.warning(f'{datetime.datetime.now()} {self.host_ip} {username} login success')
+            return True
+        else:
+            logging.warning(f'{datetime.datetime.now()} {self.host_ip} {username} login failed')
+            return False
+
+    def logout(self):
+        self.tn.close()
+
+    def adduser_h3c(self,add_username,add_password,type = ['manage','network']):
+        commands = ['sys',
+                    'local-user '+add_username+' class '+type,
+                    'service-type telnet ssh','password simple '+add_password,
+                    ' authorization-attribute user-role level-15'
+                    ]
+        
+        for command in commands:
+            self.tn.write(command.encode('ascii')+b'\n')
+            time.sleep(0.1)
+
+        #执行结果
+        execute_result =self.tn.read_very_eager()
+        if self.login_H3C_SW(username = add_username,password = add_password):
+            logging.warning(f'{add_username} add succces and telnet test success')
+            return True
+
+if __name__ == '__main__':
+    tn_cl = telnetclient('192.168.123.221')
+    if tn_cl.login_H3C_SW('admin','admin'):
+        tn_cl.adduser_h3c('test',type = 'manage',add_password ='test123')
+        tn_cl.logout()
+
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
         <id>https://behemothes.github.io/Behemothes/post/hello-gridea/</id>
