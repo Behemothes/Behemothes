@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>让我一言难尽的NAT (1) | Gridea</title>
-<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1584366902465">
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1584370912153">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="让我一言难尽的NAT (1) | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
@@ -16,7 +16,7 @@
 前言
 这个话题的大纲2019.12.22就写好了，但是最近才开始动笔，没办法-懒。
 为什么写NAT这个题材呢？
-原因很简单：很多人觉得NAT很简单，当然这些人肯定也包括很多客户以及很多工程师..." />
+原因很简单：很多人觉得NAT很简单，当然这些人里肯定也包括很多客户以及很多工程..." />
     <meta name="keywords" content="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
@@ -26,7 +26,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://behemothes.github.io/Behemothes/">
-  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1584366902465" alt="">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1584370912153" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -86,7 +86,7 @@
                 2020-03-16
               </span>
               <span>
-                17 min read
+                18 min read
               </span>
               
             </div>
@@ -98,24 +98,27 @@
 <h3 id="前言">前言</h3>
 <p>这个话题的大纲2019.12.22就写好了，但是最近才开始动笔，没办法-懒。</p>
 <p>为什么写NAT这个题材呢？</p>
-<p>原因很简单：很多人觉得NAT很简单，当然这些人肯定也包括很多客户以及很多工程师。但实际部署NAT导致业务出现了问题时，排查起来可能就没那么简单，并且由于客户、工程师觉得NAT不是很简单的事吗？那很多时候客户就会觉得：我之前用别的厂家就没问题、或者之前好好的没问题，为什么用你们设备部署个简单的NAT，就出问题了呢？</p>
-<p>甩锅?<br>
-<img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/%E7%94%A9%E9%94%85.png" alt="" loading="lazy"></p>
+<p>原因很简单：很多人觉得NAT很简单，当然这些人里肯定也包括很多客户以及很多工程师。但实际因为NAT导致业务出现问题的时候，排查起来可能就没那么简单了。并且由于客户、工程师觉得NAT不是很简单的一个功能吗？那很多时候客户就会觉得：我之前用别的厂家设备配这个简简单单的NAT功能就没问题，为什么用你们厂家的设备部署个简单的NAT，就出问题了呢？</p>
+<p>作为解决问题的你第一想法：</p>
+<p>甩锅?</p>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/%E7%94%A9%E9%94%85.png" alt="" loading="lazy"></figure>
 <p>那是甩不出去的。</p>
-<p>客户只要一句话：“之前好好的，用你们设备部署下NAT业务就出问题了”，就能把你怼得死死的。</p>
-<p>还是收拾起幼稚的想法老老实实排查问题吧。</p>
-<p>说到排查，那涉及对比测试、抓包分析、了解业务流程的过程真的是让人头大，不是因为问题多大，而是这个对比、了解业务，让客户配合收集信息，有时候比解决问题本身的技术难度，真的，难多了。</p>
-<p>很多时候还涉及到运营商，涉及到运营商配合。</p>
-<p>那真的是更一言难尽。</p>
-<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/2.png" alt="" loading="lazy"></figure>
-<p>​         可能有人会觉得，这应该是个概率很小的事吧，我当网工这么久，基本没遇见过什么NAT导致的问题啊？？？</p>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/3.png" alt="" loading="lazy"></figure>
+<p>客户只要一句话：“之前好好的，用你们设备部署下NAT业务就出问题了，肯定是你们有啥问题啊。”，就能把你怼得死死的。</p>
+<p>所以还是收拾起幼稚的想法，老老实实排查问题吧。</p>
+<p>说到排查问题，那涉及到的事情可久多了：对比测试、抓包分析、了解业务流程，整个过程真的是让人头大，不是因为问题多大，而是这个对比、了解业务、让客户配合收集信息，有时候比解决问题本身的技术难度，真的，难多了。</p>
+<p>很多时候还涉及到运营商。</p>
+<p>涉及到运营商配合，那真的是更一言难尽.......</p>
+<p>很多运营商过来个也不太懂技术的人，自己电脑一插外网网线，没问题的，OK的，我们没问题的.....</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/2.png" alt="" loading="lazy"></figure>
+<p>可能有人会觉得，这应该是个概率很小的事吧，我当网工这么久，基本没遇见过什么NAT导致的问题啊？？？</p>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/3.png" alt="" loading="lazy"></figure>
 <p>但是，很不幸。</p>
-<p>作为一名曾经的TAC的资深专家工程师（没错这个岗位叫专家工程师，哈哈！），我曾经经常搞得就是这些一般人遇不到的、奇葩的问题，所以对我而言，这个概率真不低，尤其是企业客户，现在哪个企业网络里不部署NAT呢？（当然不绝对这句话，大客户表示我直接公网地址+BGP，NAT是个啥），搞企业网客户遇见NAT的“疑难杂症”、“奇葩问题”几率真的是太高了。</p>
-<h2 id="nat真的很简单吗">NAT真的很简单吗？</h2>
-<p>首先我们聊一聊NAT真的很简答吗？</p>
-<p>如果只是能通、能用的角度来看，NAT真的简单，H某C、某H配置出方向的源地址转换最简单的情况下，接口下：</p>
-<p>Nat outbound</p>
+<p>作为一名曾经的TAC的资深专家工程师（没错这个岗位叫专家工程师，哈哈！），我有时候经常搞得就是这些一般人遇不到的、奇葩的、难搞的问题，所以对我而言，这个概率真不低。尤其是企业网客户，现在哪个企业网里不部署NAT呢？（当然不绝对这句话，大客户表示我直接公网地址+BGP，NAT是个啥？）。</p>
+<h3 id="nat真的很简单吗">NAT真的很简单吗？</h3>
+<p>首先我们来想下NAT真的很简答吗？</p>
+<p>如果只是能通、能用的角度来看，NAT真的简单，H某C、H某这两家配置出方向的源地址转换最简单的场景下，接口下一条命令：</p>
+<pre><code class="language-shell">Nat outbound
+</code></pre>
 <p>就可以搞定。</p>
 <p>C记可能命令要多想一些，但命令真的也不多。</p>
 <p>但是如果从另外一个角度，很多时候NAT的细节问题又不简单。</p>
@@ -123,51 +126,53 @@
 <p>我们先看几个小问题，看你能想到多深。</p>
 <ol>
 <li>某个企业只有一个公网IP地址，使用这个公网IP地址给内网地址做源地址转换（这里说的自然是端口转换，也就是所谓的NAPT）上Internet，那内网用户能同时发起多少个TCP连接？</li>
-<li>NAPT我们都知道是根据TCP、UDP的端口号实现一个公网IP对多个没网内网IP的映射转换，那ICMP呢？ 可以内网多个终端同时去ping外网的地址吗？ 能做到同时转换吗？</li>
-<li>NAPT场景下能存在多个内网终端使用GRE封装同时去访问外网吗？</li>
+<li>NAPT我们都知道是根据TCP、UDP的端口号实现一个公网IP对多个内网IP的同时映射转换，那ICMP呢？ 可以内网多个终端同时去ping外网的公网地址吗？ 能做到同时转换吗？</li>
+<li>NAPT场景下能实现多个内网终端使用GRE VPN同时去访问外网吗？</li>
 </ol>
 <p>以上问题有兴趣可以自己思考，后续你会在文章中看看真正的答案和你想的差多远。</p>
 <h2 id="基础知识点">基础知识点</h2>
 <h3 id="nat的本质到底是什么">NAT的本质到底是什么</h3>
-<p>NAT是什么各位高工相信不用我废话。其实现在我们聊到NAT，很多时候都在说端口转换（NAPT），这个使用频率说是第一，应该没人敢说第二。除了这个给内网用户访问Internet做端口转换的技术外，很多时候我们还会提到另外一个概念，端口映射（NAT server），这两种NAT技术基本上覆盖了绝大多数场景。</p>
+<p>NAT是什么各位高工相信不用我废话。其实现在我们聊到NAT，很多时候都在说端口转换（NAPT），这个使用频率说是第一，应该没人敢说第二。</p>
+<p>除了这个给内网用户访问Internet做端口转换的技术外，很多时候我们还会提到另外一个概念，端口映射（NAT server），这两种NAT技术基本上覆盖了绝大多数NAT的使用场景。</p>
 <p>那今天借着这两个技术，我们回顾下实现NAT技术的关键点到底是什么。</p>
 <h4 id="napt">NAPT</h4>
-<p>传统静态NAT、动态NAT技术都要求很多公网IP地址？</p>
+<p>传统静态NAT、动态NAT技术都要求多个公网IP地址才能够对内网的私网地址进行转换。</p>
 <p>为什么？</p>
-<p>因为要建立一个转换前后信息一一对应的转换表项。</p>
-<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/NAPT.png" alt="" loading="lazy"></figure>
-<p>以上图为例，使用私网地址的192.168.1.100访问外网服务器200.1.1.1，使用静态NAT转换成100.1.1.1。</p>
-<p>当1.100的报文经过NAT设备转发到公网时，NAT设备会创建一个表项，记录转换前后的信息：</p>
-<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/nat_T_1.png" alt="" loading="lazy"></figure>
-<p>当报文到达200.1.1.1。200.1.1.1回包，并且这个报文到达NAT设备时，NAT设备会根据报文的目的IP（100.1.1.1）查找NAT表项，查找到inside ip，将报文目的IP转换为192.168.1.100。</p>
+<p>因为要建立一个转换前后的信息能够一一对应的转换表项（NAT映射表）。</p>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/NAPT.png" alt="" loading="lazy"></figure>
+<p>以上图为例，使用私网地址192.168.1.100访问外网服务器200.1.1.1，使用静态NAT转换成100.1.1.1。</p>
+<p>当1.100发送的报文经过NAT设备转发到公网时，NAT设备会创建一个表项，记录转换前后的信息：</p>
+<figure data-type="image" tabindex="5"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/nat_T_1.png" alt="" loading="lazy"></figure>
+<p>当报文到达200.1.1.1之后200.1.1.1回包，这个报文到达NAT设备时，NAT设备会根据报文的目的IP（100.1.1.1）查找NAT表项，查找到inside ip，将报文目的IP转换为192.168.1.100。</p>
 <p>一个很简单的过程，有的人可能表示都听烂了。</p>
-<figure data-type="image" tabindex="5"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212529.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="6"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212529.png" alt="" loading="lazy"></figure>
 <p>但是如果表项长成这样：</p>
-<figure data-type="image" tabindex="6"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212609.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="7"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212609.png" alt="" loading="lazy"></figure>
 <p>来自公网目的IP为100.1.1.1的报文，NAT设备如何转换目的IP呢？</p>
 <p>无法判断。</p>
-<p>因为NAT table里inside ip、global ip不是一一对应的，动态IP是一样的，无法做到一个global ip对应多个inside ip。</p>
-<p>所以，NAT有个核心行为：构建一一对应关系的NAT table，转换前信息和转换后信息一一对应。这样让回包从公网到达NAT设备时，NAT设备可以正确的反向转换。</p>
+<p>因为NAT table里inside ip、global ip不是一一对应的，动态IP也是一样的，无法做到一个global ip同时对应多个inside ip。</p>
+<p>所以，NAT有个核心行为：</p>
+<p><strong>构建转换前后IP报文里的信息能够一一对应的NAT table，这样回包从公网到达NAT设备时，NAT设备可以正确的反向转换。</strong></p>
 <p>不然NAT设备咋给你回包反向转换呢？都不知道你原来什么样，你让它猜吗？</p>
-<figure data-type="image" tabindex="7"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212655.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="8"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212655.png" alt="" loading="lazy"></figure>
 <p>这点很重要。</p>
-<p>所以在这个table只有inside ip和global ip时，很显然无法做到我们说的构建一个转换前后信息一一对应的表项，那怎么办？</p>
-<p>如果只有这两个元素无法实现，那就添加别的元素来实现呗。添加的信息在IP头部里最好是有一个很大的可变动值，这样才能实现一个global ip使用这个信息构建多个table entry去对应内网多个inside ip，这个信息是啥？大家其实都知道：端口号。</p>
+<p>所以在这个table只有inside ip和global ip时，很显然无法做到我们说的<strong>构建转换前后IP报文里的信息能够一一对应的NAT table</strong>，那怎么办？</p>
+<p>如果只有这两个元素无法实现，那就添加别的元素来实现呗。</p>
+<p>添加的信息在IP头部里最好是有一个很大的可变动值，这样才能实现一个global ip使用这个值构建多个table entry去对应内网多个inside ip，这个信息是啥？大家其实都知道：端口号。</p>
 <p>当NAT table里的元素多了端口号之后，表项就成这样：</p>
-<figure data-type="image" tabindex="8"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212740.png" alt="" loading="lazy"></figure>
-<p>此时对于目的IP都是100.1.1.1的报文，NAT设备就可以根据IP报文目的端口号去查找inside ip到底是192.169.1.100还是192.168.1.101，执行正确的回向报文转换。</p>
+<figure data-type="image" tabindex="9"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212740.png" alt="" loading="lazy"></figure>
+<p>此时对于目的IP都是100.1.1.1的报文，NAT设备就可以根据IP报文中的目的端口号去查找inside ip到底是192.169.1.100还是192.168.1.101，执行正确的回向报文转换。</p>
 <p>这个技术其实就是NAPT，大家也都很熟悉。</p>
-<p>所以重复下关键点：</p>
-<p>构建一一对应关系的NAT table，记录转换前后的IP报文信息，精确地识别回包，找到唯一的table entry，进行反向转换。</p>
 <h2 id="tcp-udp-and-more">TCP UDP and more？</h2>
-<p>现在大家都知道NAPT可以对IP报文的TCP、UDP的端口号进行转换，因为使用它们加上传输层协议类型就可以构建一个转换前信息和转换后信息表项，实现回包的反向转换。</p>
-<p>那没有端口号的协议呢？IP头部里protocol这个字段的取值范围可是1-255，它们就没有办法像NAPT那样内网多个用户同时使用一个公网IP对外发起访问吗？</p>
-<p>答案自然是可以，但不是所有的IP上层协议都可以做到。</p>
-<p>还是那句话，能构建出来转换前后信息一一对应的表项就能反向转换，出去时正向转换那不是重点。</p>
-<figure data-type="image" tabindex="9"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212912.png" alt="" loading="lazy"></figure>
+<p>大家都知道NAPT可以对IP报文的TCP、UDP的端口号进行转换，因为使用端口号加上传输层协议类型（TCP or UDP）就可以构建一个转换前信息和转换后信息一一对应的表项，实现回包的反向转换。</p>
+<p>那没有端口号的协议呢？IP头部里protocol这个字段的取值范围可是1-255，没有端口号的协议就没有办法像NAPT那样内网多个用户同时使用一个公网IP对外发起访问吗？</p>
+<p>答案自然是可以，但不是所有的没有端口号的IP上层协议都可以做到。</p>
+<p>还是那句话，能<strong>构建转换前后IP报文里的信息能够一一对应的NAT table</strong>就能反向转换，出去时正向转换那不是重点。</p>
+<figure data-type="image" tabindex="10"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212912.png" alt="" loading="lazy"></figure>
 <p>端口号是构建表项的一个信息之一，但是不代表只有端口号可以配合IP地址构建这个转换前后信息一一对应的表项。</p>
 <h3 id="icmp">ICMP</h3>
-<p>以一个身边最常见的协议为例：ICMP，以某厂家设备为例查看ICMP的NAT表项</p>
+<p>以一个身边最常见的协议为例：ICMP。</p>
+<p>下面是某家的NAT表项里ICMP协议的条目：</p>
 <pre><code class="language-shell">Slot 0:
 Initiator:
   Source      IP/port: 192.168.1.100/194
@@ -196,21 +201,24 @@ Total sessions found: 1
 <p>大家可以看到，很神奇的，ICMP的NAT转换表项里居然写着源、目端口号？？？</p>
 <p>ICMP的报文格式里明明没有端口号，这个端口号哪来的？</p>
 <p>大家可以看下ICMP的报文格式：</p>
-<figure data-type="image" tabindex="10"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/ICMP.png" alt="" loading="lazy"></figure>
-<p>ICMP虽然没有端口号，但是在报文格式里有type、code这两个字段，我们常见的echo request、echo reply其type  code字段值分别为8 0与0 0。</p>
-<p>在wireshark中查看下内网的icmp请求报文，以及公网回应的icmp reply（还未进行目的地址转换）。</p>
-<figure data-type="image" tabindex="11"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316213550.png" alt="" loading="lazy"></figure>
-<p>内网发起的icmp request，其type code字段的16进制值：0x0800，转换成10进制：</p>
-<figure data-type="image" tabindex="12"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/code.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="11"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/ICMP.png" alt="" loading="lazy"></figure>
+<p>ICMP虽然没有端口号，但是在报文字段里有type、code这两个字段，我们常见的echo request、echo reply其type  code字段值分别为8 0与0 0。</p>
+<p>在wireshark中查看下内网的ICMP请求报文，以及公网回应的ICMP Reply（还未进行目的地址转换）。</p>
+<figure data-type="image" tabindex="12"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316213550.png" alt="" loading="lazy"></figure>
+<p>内网发起的ICMP request，其type code字段的16进制值：0x0800，转换成10进制：</p>
+<figure data-type="image" tabindex="13"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/code.png" alt="" loading="lazy"></figure>
 <p>而另外一个参数：identifier，wireshark已经直接转换成10进制显示了：194。</p>
+<p>194、2048这两个值正是表项中initiator里的源端口号、目的端口号。</p>
 <p>所以NAT表项中的转换前源端口号、目的端口是什么已经不言而喻：由identifier、type+code的16进制转换而来的。</p>
-<p>再看下外网回应的icmp request报文：</p>
-<figure data-type="image" tabindex="13"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214056.png" alt="" loading="lazy"></figure>
+<p>再看下外网回应的ICMP request报文：</p>
+<figure data-type="image" tabindex="14"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214056.png" alt="" loading="lazy"></figure>
 <p>可以看到回应报文的type+code为0x0000，转换成10进制还是0。</p>
 <p>而identifier字段为1。</p>
-<p>这也对应了上面NAT表项中的responder中的源目端口号。</p>
+<p>这也对应了上面NAT表项中的responder方向中的源、目端口号。</p>
+<p>所以第二个问题的答案不言而喻。</p>
+<p>可以。</p>
 <h3 id="nat表项">NAT表项</h3>
-<p>ICMP的表项看的很乱，我们来看看一个正常的TCP端口转化表项。</p>
+<p>ICMP的表项看的很乱，我们来看看一个正常的TCP NAT转化表项。</p>
 <pre><code class="language-powershell">Slot 0:
 Initiator:
   Source      IP/port: 192.168.1.100/26688
@@ -240,27 +248,27 @@ Total sessions found: 1
 <pre><code class="language-shell">  Source      IP/port: 192.168.1.100/26688
   Destination IP/port: 200.1.1.1/23
 </code></pre>
-<p>目的端口号23，源端口号 26688。而匹配回应报文的表项部分：</p>
+<p>目的端口号23，源端口号 26688。而反向报文（responder）的表项部分：</p>
 <pre><code class="language-shell">Responder:
   Source      IP/port: 200.1.1.1/23
   Destination IP/port: 100.1.1.1/1024
 </code></pre>
-<p>源端口号23，目的端口号1024，不难看出经过NAT转换之后正向报文的192.168.1.100的26688端口应该是被转换成了100.1.1.1的1024端口，我们可以在被telnet的200.1.1.1上验证下。</p>
+<p>源端口号23，目的端口号1024，反向推理不难得出经过NAT转换之后正向报文的192.168.1.100的26688端口应该是被转换成了100.1.1.1的1024端口，我们可以在被telnet的200.1.1.1上验证下。</p>
 <pre><code class="language-shell">*: TCP connection with authentication
  Local Addr:port       Foreign Addr:port     State       Slot  PCB
  0.0.0.0:23            0.0.0.0:0             LISTEN      0     0xffffffffffffff9d
  200.1.1.1:23          100.1.1.1:1024        ESTABLISHED 0     0xffffffffffffff9f
 </code></pre>
-<p>从这里我们看出来，正常的TCP、UDP表项中responder方向的源目端口号可以和被转换后的正向报文源目IP对应，ICMP只是特例。</p>
+<p>从这里我们看出来，正常的TCP、UDP表项中responder方向的源、目端口号可以和被转换后的正向报文源、目端口号对应，ICMP只是特例。</p>
 <p>再想想还有什么细节。</p>
 <p>为什么记录原始报文的目的地址、目的端口号？</p>
-<figure data-type="image" tabindex="14"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214400.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="15"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214400.png" alt="" loading="lazy"></figure>
 <p>以上面的NAT table来看，只记录转换前的源端口和转换后的源端口不就可以了，完全可以实现回包的一对一查找啊。</p>
 <p>下面看下表项扩充之后的例子：</p>
-<figure data-type="image" tabindex="15"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214445.png" alt="" loading="lazy"></figure>
-<p>是不是觉得单独看完全就是多此一举。</p>
-<p>下面我们增加两个条目。</p>
-<figure data-type="image" tabindex="16"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214517.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="16"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214445.png" alt="" loading="lazy"></figure>
+<p>单独看上表是不是觉得完全是多此一举。</p>
+<p>下面我们为该表项增加两个条目。</p>
+<figure data-type="image" tabindex="17"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214517.png" alt="" loading="lazy"></figure>
 <p>看下Index 2和index 1对比：</p>
 <ol>
 <li>相同的目的IP、但是目的端口不一致，一个是23、一个是80。</li>
@@ -274,7 +282,7 @@ Total sessions found: 1
 <li>源端口不一致，一个是23、一个是80。</li>
 </ol>
 <p>那NAT设备能准确地将这两个回包进行反向转换吗？</p>
-<figure data-type="image" tabindex="17"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214612.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="18"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214612.png" alt="" loading="lazy"></figure>
 <p>答案是可以的。</p>
 <p>使用</p>
 <p>[目的IP 100.1.1.1、目的端口 1024、源IP 200.1.1.1、源端口 23]</p>
@@ -282,15 +290,21 @@ Total sessions found: 1
 <p>[目的IP 100.1.1.1、目的端口 1024、源IP 200.1.1.1、源端口 80]</p>
 <p>去查找到的也只会是index 2。</p>
 <p>那再看下index 1 和 3呢？</p>
-<p>回包都是[目的IP 100.1.1.1,目的端口1024]，但是拥有不同的[源IP地址、相同的源端口号]，能正常转换成内网IP、端口吗？</p>
+<p>回包都是[目的IP 100.1.1.1、目的端口1024]，但是拥有不同的[源IP地址、相同的源端口号]，NAT设备能够正常转换吗？</p>
 <p>答案还是可以。</p>
 <h3 id="nat无限次转换">NAT无限次转换</h3>
-<figure data-type="image" tabindex="18"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214732.png" alt="" loading="lazy"></figure>
-<p>是不是发现只要这个表格里底色是灰色的部分只要存在元素不一致，就可以实现回包的精准反向转换。我们假设下如果公网IP只有一个，传输层协议固定为TCP，那能同时转换多少个TCP连接呢？</p>
-<p>只要正向报文的目的IP、目的端口其中存在一个不一致，一个公网IP的源端口就可以一直复用，而实际生活中内网用户访问外网，[目的IP、目的端口]一致的情况占比并不是很常见，所以大致想下假设拥有一个固定的公网IP情况下这个表项能有多少个可能的组合呢：</p>
-<p>（可用源端口：65536 – 1024）<em>（全球不同的目的公网IP：2</em>32，实际要去掉D、E地址段、私网地址段）*（不同的目的端口号：65536，当然实际实际业务中目的端口号没这么多，一般都是一些常见目的端口号）。</p>
+<figure data-type="image" tabindex="19"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214732.png" alt="" loading="lazy"></figure>
+<p>是不是发现只要上面这个表格里底色是灰色的部分只要存在元素不一致，就可以实现回包的精准反向转换。</p>
+<p>我们假设下在只有一个公网IP、传输层协议固定为TCP的情况下，能同时转换多少个内网的TCP连接呢？</p>
+<p>只要正向报文的目的IP、目的端口其中存在一个不一致，一个公网IP的源端口就可以一直复用，而实际生活中内网用户访问外网时[目的IP、目的端口]一致的情况并不是很常见，所以大致想下这个表项能有多少个可能的组合呢：</p>
+<p>（可用源端口：65536 – 1024）</p>
+<p>x</p>
+<p>（全球不同的目的公网IP：2的32次方，实际要去掉D、E地址段、私网地址段）</p>
+<p>x</p>
+<p>（不同的目的端口号：65536，当然实际业务中目的端口号没这么多，一般都是一些常见目的端口号）</p>
 <p>我是没算，但是这个数字绝对很恐怖。</p>
-<p>所以回想下，只有一个公网IP情况下，可以同时为内网多少个TCP连接做NAT转换呢？</p>
+<p>所以回想下第一个问题：</p>
+<p><em>某个企业只有一个公网IP地址，使用这个公网IP地址给内网地址做源地址转换（这里说的自然是端口转换，也就是所谓的NAPT）上Internet，那内网用户能同时发起多少个TCP连接？</em></p>
 <p>很多个，只要这个NAT设备支持在NAT表项中记录目的IP、目的端口。</p>
 <p>答案绝不止是65536-1024那么简单。</p>
 <p>现在很多设备早已支持这种技术，只是不同的厂家可能称呼不同。比如我知道的H某C叫NAT无限次转换。</p>
@@ -298,28 +312,30 @@ Total sessions found: 1
 <p>还是要的。</p>
 <p>毕竟一条NAT转换的记录中多了几字节内容，记录到内存中占用的内存空间也多一些，在一个拥有数百G流量的CGN(Carrier-grade <em>NAT</em>)设备上，那种量级的NAT表项多出来的内存占用也是不小的数字。</p>
 <h3 id="application">Application</h3>
-<p>应用识别最近几年在NGFW上挺火的，不支持应用识别的FW都不好意思叫自己NGFW。应用识别简单地说就是设备就查看报文应用层内容，识别出流量特征，判断出该流量属于哪个应用，比如都是80端口或者443端口，但是访问的网站不同，应用识别可以识别出具体访问的网站类型（甚至是网站名称）。</p>
-<p>下面我们就看下假如NAT表项中存在application这一项内容。</p>
-<figure data-type="image" tabindex="19"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214856.png" alt="" loading="lazy"></figure>
+<p>应用识别最近几年在NGFW（Next Generation Firewall）上挺火的，不支持应用识别的FW都不好意思叫自己NGFW。应用识别简单地说就是设备就查看报文应用层内容，识别出流量特征，判断出该流量属于哪个应用，比如都是80端口或者443端口，但是访问的网站不同，应用识别可以识别出具体访问的网站类型（甚至是网站名称）。</p>
+<p>下面我们就看下假如NAT表项中存在application这一项内容会如何。</p>
+<figure data-type="image" tabindex="20"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214856.png" alt="" loading="lazy"></figure>
 <p>假设访问相同的目的IP、目的端口（80，都是web业务），但是NAT设备支持应用识别，能识别到在HTTP头部中网站的url是不同的，把数据流识别成不同的应用，那这样是不是NAT表项中又多了一项内容？</p>
-<p>理论上可以，不过表项不太可能长成这样，毕竟一般访问公网不同的业务都是不同的目的IP，端口号会相同，但是应用层数据不同。</p>
+<p>理论上可以，不过表项不太可能长成这样，毕竟一般访问公网不同的业务都是不同的目的IP（可能目的端口相同）但是应用层数据不同。</p>
 <p>那更具有实际应用场景的是什么呢？</p>
-<p>大家想下端口映射，端口映射需要根据目的IP、目的端口将报文转换成内网目的IP、内网端口，这也是个一对一映射的表项。</p>
-<figure data-type="image" tabindex="20"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215025.png" alt="" loading="lazy"></figure>
+<p>大家想下端口映射，端口映射需要根据目的IP、目的端口将报文转换并发往内网的目的IP、内网端口，这也是个一对一映射的表项。</p>
+<figure data-type="image" tabindex="21"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215025.png" alt="" loading="lazy"></figure>
 <p>但是很多时候会有这样一种需求，只有一个公网IP、一个端口号，把来自外网的访问映射到内网不同的服务器、端口上。</p>
-<p>如果只是根据传输层端口号肯定做不到以上的需求，但是加上应用层信息就[<a href="#_msocom_1">施1]</a> 可以实现，根据应用层识别不同的HTTP URL就可以做到将报文转发到内网不同服务器。</p>
+<p>如果只是根据传输层端口号肯定做不到以上的需求，但是加上应用层信息就可以实现，应用层识别到不同的HTTP URL就可以做到将报文转发到内网不同的服务器上。</p>
+<figure data-type="image" tabindex="22"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316230105.png" alt="" loading="lazy"></figure>
 <p>其实这就是应用层负载均衡、WAF（Web application Firewall，代理模式下）的功能，如果这么想是不是觉得原理和NAT Server很像，只是加入了应用层信息构建表项。</p>
-<figure data-type="image" tabindex="21"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215118.png" alt="" loading="lazy"></figure>
-<p>不过代价是识别应用层对设备的CPU开销会显著增加。</p>
+<figure data-type="image" tabindex="23"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215118.png" alt="" loading="lazy"></figure>
+<p>不过代价是：识别应用层信息对设备的CPU开销会显著增加。</p>
 <p>同时还有什么代价？</p>
 <p>简单回顾下三次握手：TCP三次握手建立之后才会传输真正的内容，也就是说在三次握手完成之前，没有传输层内容，没有所谓的HTTP URL，设备无法在TCP三次握手完成之前判断怎么转换IP头部，那咋办？</p>
-<figure data-type="image" tabindex="22"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215152.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="24"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215152.png" alt="" loading="lazy"></figure>
 <p>既然三次握手之后才会有，那设备就做个TCP代理呗，响应客户的TCP SYN，完成三次握手之后再决定把报文发给内网的哪个设备。</p>
-<p>嗯。</p>
-<p>设备从只是转发到查看应用层信息，现在又多了一个维护大量TCP连接，所以性能损耗增加的不是一点点。</p>
-<p>所以到这是不是发现，只是一个简简单单的NAT源地址、源端口转换，目的IP、目的端口转换，原来也不是那么简单。</p>
+<figure data-type="image" tabindex="25"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316225043.png" alt="" loading="lazy"></figure>
+<h2 id="总结">总结</h2>
+<p>NAT从简简单单的只需要查看传输层信息到需要查看应用层信息，最后又多了一个维护大量TCP连接的重担，所以性能损耗增加的不是一点点，并且受限于TCP连接数问题，单位时间内能够维持的TCP连接数和设备只是做NAT转换、转发的报文数量比起来，真的差太多了，有兴趣的话可以看看《HTTP权威指南》中的第四章，其中有详细介绍。</p>
+<p>所以到这是不是发现，只是一个简简单单的NAT源地址、源端口转换，目的IP、目的端口转换，原来也不是那么简单，原来还是有一些想不到的细节在里面。</p>
 <p>当然，这个和什么NAT ALG、VPN遇见NAT比起来还算好。。</p>
-<p>所以下一个章节就是回答第三个问题？NAT与VPN之间的兼容性问题。</p>
+<p>所以下一个章节就是回答第三个问题，NAT与VPN之间的兼容性问题。</p>
 
               </div>
               <div class="toc-container">
@@ -329,9 +345,9 @@ Total sessions found: 1
 <li><a href="#%E5%86%99%E5%9C%A8%E5%BC%80%E5%A7%8B%E4%B9%8B%E5%89%8D">写在开始之前</a>
 <ul>
 <li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#nat%E7%9C%9F%E7%9A%84%E5%BE%88%E7%AE%80%E5%8D%95%E5%90%97">NAT真的很简单吗？</a></li>
 </ul>
 </li>
-<li><a href="#nat%E7%9C%9F%E7%9A%84%E5%BE%88%E7%AE%80%E5%8D%95%E5%90%97">NAT真的很简单吗？</a></li>
 <li><a href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%82%B9">基础知识点</a>
 <ul>
 <li><a href="#nat%E7%9A%84%E6%9C%AC%E8%B4%A8%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88">NAT的本质到底是什么</a>
@@ -349,6 +365,7 @@ Total sessions found: 1
 <li><a href="#application">Application</a></li>
 </ul>
 </li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
 </ul>
 </li>
 </ul>
