@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://behemothes.github.io/Behemothes/</id>
     <title>Gridea</title>
-    <updated>2020-03-16T15:02:53.537Z</updated>
+    <updated>2020-03-16T15:04:05.778Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://behemothes.github.io/Behemothes/"/>
     <link rel="self" href="https://behemothes.github.io/Behemothes/atom.xml"/>
@@ -141,7 +141,7 @@ Total sessions found: 1
 <p>可以。</p>
 <h3 id="nat表项">NAT表项</h3>
 <p>ICMP的表项看的很乱，我们来看看一个正常的TCP NAT转化表项。</p>
-<pre><code class="language-powershell">Slot 0:
+<pre><code class="language-shell">Slot 0:
 Initiator:
   Source      IP/port: 192.168.1.100/26688
   Destination IP/port: 200.1.1.1/23
