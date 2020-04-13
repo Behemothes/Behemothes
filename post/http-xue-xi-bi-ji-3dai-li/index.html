@@ -1,0 +1,414 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HTTP学习笔记 （3）代理 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="HTTP学习笔记 （3）代理 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="代理的定义：代替客户端与服务器进行事务交互的中间人，对于客户端所有的请求会发送到代理，代理像服务器一样进行事务处理完成之后再发送给服务器。
+代理并不只是简单的转发，客户端与代理建立tcp连接传输http事务，代理可以对这些事务进行处理，对客..." />
+    <meta name="keywords" content="学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              HTTP学习笔记 （3）代理
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                14 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>代理的定义：代替客户端与服务器进行事务交互的中间人，对于客户端所有的请求会发送到代理，代理像服务器一样进行事务处理完成之后再发送给服务器。<br>
+代理并不只是简单的转发，客户端与代理建立tcp连接传输http事务，代理可以对这些事务进行处理，对客户端的原始http头部进行删除、修改、转码之后再发送给服务器。</p>
+<h4 id="web的中间实体">Web的中间实体</h4>
+<h5 id="代理的分类">代理的分类</h5>
+<ol>
+<li>公共代理:公共使用，一般为性能比较高的服务器，通过服务器上相关代理服务实现。</li>
+<li>私有代理：最常见的形式就是个人电脑上的http、sock代理软件，对本地的http实现代理，例如SSR实现对本地+可选的局域网内部进行代理，之后通过SSR翻越GFW。</li>
+</ol>
+<h5 id="代理与网关的区别">代理与网关的区别</h5>
+<p>http经过代理还是http，这是代理。<br>
+http经过网关（不是网络层面的网关）之后被转换成其他的协议，如pop，这是网关，网关实现的功能为协议转换。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200413223051.png" alt="P12" loading="lazy"></figure>
+<h4 id="why-proxy">Why proxy？</h4>
+<p>为什么使用代理，下面以几种代理服务器常见功能为例，因为proxy是http事务的终结处，所以可以实现对http的很多内容操作。</p>
+<ol>
+<li>内容过滤<br>
+过滤一些非法的站点内容或者禁止某些类型文件传输（如在企业中禁止传输文档）</li>
+<li>访问控制<br>
+禁止某些客户端访问某些站点或者站点内的页面。</li>
+<li>内容过滤<br>
+代理服务器上实现DPI的功能，过滤http传输的一些攻击、病毒。</li>
+<li>Web缓存<br>
+Proxy上缓存部分站点内容，实现访问加速。</li>
+<li>反向代理<br>
+扮演真实服务器，客户端并不知道proxy是proxy，认为自己是与服务器在直接通信。</li>
+<li>转码器<br>
+经过代理的页面内容变化：将GIF格式图片转换成JPG、将页面排版转换为适合手机的页面、将页面语言翻译。</li>
+<li>内容路由器<br>
+根据请求的页面内容不同将http请求转发到不同的真实服务器上，类似SLB。</li>
+</ol>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200413223106.png" alt="P13" loading="lazy"></figure>
+<ol start="8">
+<li>隐藏客户端真实信息<br>
+Proxy在转发客户端的http请求时可以删除其中一些包含用户信息的header，如：<br>
+Cookie、from（客户端邮件信息）、referer、user-agent，同时因为是在tcp层面也是proxy，所以也隐藏了客户端的真实IP地址。</li>
+</ol>
+<h4 id="代理转发相关">代理转发相关</h4>
+<h5 id="代理服务器的部署位置">代理服务器的部署位置</h5>
+<ol>
+<li>出口部署<br>
+部署在网络出口路径，主要实现内部网络访问外部网络的代理</li>
+<li>入口部署<br>
+部署在外部客户端访问内部http服务器的路径上</li>
+<li>反向代理<br>
+部署在接近http服务器的网络位置，一般为旁挂在http服务器的上层的核心交换。</li>
+<li>网络节点之间<br>
+部署在两个ISP路由之间，通过缓存减少ISP之间的访问压力。</li>
+</ol>
+<h5 id="代理的层次结构">代理的层次结构</h5>
+<p>在存在多级代理的情况下，每个代理之间存在上、下级关系（parent、child）。<br>
+父代理：更靠近server的inbound下一级代理。<br>
+子代理：更靠近client的outbound下一级代理。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200413223117.png" alt="P14" loading="lazy"></figure>
+<h5 id="proxy的动态选择parent-proxy">Proxy的动态选择parent proxy</h5>
+<p>Child可以根据内容的不同、负载算法的不同动态选择转发的下一跳parent proxy，而不是不成不变的永远只发给固定的一个parent proxy，类似SLB。</p>
+<ol>
+<li>负载均衡<br>
+根据负载均衡算法选择下一跳parent proxy</li>
+<li>基于地域位置选择就近的parent proxy<br>
+与F5的基于客户端IP选择地理区域上就近的服务器类似</li>
+<li>基于http报文内容<br>
+根据http内的内容不同：uri、method等报文内的字节内容选择下一跳parent proxy。</li>
+</ol>
+<h5 id="流量如何转发到代理">流量如何转发到代理</h5>
+<ol>
+<li>客户端上手动配置，配置浏览器内的代理服务器，浏览器会把http流量发送到配置中的proxy。</li>
+<li>网络层面将流量引导到proxy，proxy上做tcp劫持，一般为反向代理的方式下。</li>
+<li>Dns解析结果直接为proxy地址。</li>
+<li>http服务器上redirect到proxy。</li>
+</ol>
+<h4 id="代理相关问题">代理相关问题</h4>
+<h5 id="uri-部分-or-全部">URI 部分 or 全部</h5>
+<p>在客户端的request中uri是这样的：</p>
+<pre><code class="language-http">GET /index.aspx HTTP/1.1
+Host: www1.dbappsecurity.com.cn
+Connection: keep-alive
+</code></pre>
+<p>在get后边我们可以看到没有协议信息、没有域名信息。</p>
+<p>但也有可能是这样的：</p>
+<pre><code class="language-http">GET http://www1.dbappsecurity.com.cn/index.aspx HTTP/1.1 
+Host: www1.dbappsecurity.com.cn
+</code></pre>
+<p>此时我们注意到uri部分变成了包含协议、url的完整信息，为什么会出现部分uri以及完整uri呢？</p>
+<p>查看request完整信息就不难看出：</p>
+<pre><code class="language-http">GET http://www1.dbappsecurity.com.cn/index.aspx HTTP/1.1 
+Host: www1.dbappsecurity.com.cn 
+Proxy-Connection: keep-alive 
+Upgrade-Insecure-Requests: 1 
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3 
+Accept-Encoding: gzip, deflate 
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7
+</code></pre>
+<p>完整uri请求的是一个存在proxy的请求，上面的则是不存在proxy情况下的请求。<br>
+在最开始的http设计方案中，不存在proxy，所以uri内容为了精简就只有部分内容，不包含协议、url信息。但是如果存在proxy的存在这样就存在问题，proxy收到之后无法知道协议信息、url，只能知道目的服务器的IP地址，如果目的服务器上存在多个站点或者多种协议（ftp、https、http，比如目的端口为8000，非标准定义端口，get的到底应该使用http还是https？即便是80端口也有可能服务器上只支持https，但是使用的端口被管理员修改了，不携带协议，这个request服务器不会正常响应）。<br>
+所以为了能够让代理服务器正常的向真实服务器发起请求，在存在代理的情况下部分uri就会变成完整uri。</p>
+<h5 id="同一个服务器多个站点虚拟服务器">同一个服务器多个站点（虚拟服务器）</h5>
+<p>Web站点会有一个用于存放web页面文件的目录，这个目录叫做 根目录，document root（docroot），web服务器会从request的uri提取路径并附加在docroot后，以此获取页面文件的绝对路径。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200413223124.png" alt="P15" loading="lazy"></figure>
+<p>在上图的例子中，get中请求的uri为/specials/saw-blade.gif，web服务器加上docroot通过绝对路径获取这个文件，之后传递给客户端。<br>
+如果一个物理服务器上存在多个站点，每个站点的docroot不相同，此时针对一个客户端发送过来的请求就必须通过一些字段识别出正确的docroot，否则服务器无法知道请求的是哪一个站点内的页面。<br>
+这些字段可以为：</p>
+<ol>
+<li>Host字段：host字段会携带IP、port或者域名信息。</li>
+<li>Uri字段：完整uri请求中直接携带域名信息。</li>
+</ol>
+<h5 id="与虚拟服务器的区别">与虚拟服务器的区别</h5>
+<p>存在代理服务器时要求发送完整uri，而虚拟服务器则是通过host字段获取主机端口信息 or 完整uri中获取（但基本都是host字段）。</p>
+<h5 id="无感知的代理服务器">无感知的代理服务器</h5>
+<p>并不是所有的代理服务器存在对于客户端都是可知的，比如反向代理、tcp劫持方式的代理，此时客户端发送的请求中携带的是部分uri，代理服务器需要借助其他方式来确定真实服务器信息：</p>
+<ol>
+<li>反代方式：在这种方式下因为代理充当真实服务器，所以反代本身就知道真实服务器信息，在本地有配置，所以可以正常转发至真实服务器。</li>
+<li>Tcp劫持方式：这种方式下代理服务器需要查看原始报文中的IP端口信息来确认真实服务器信息。</li>
+<li>如果以上两种方式获取不到有效信息，也不存在host字段，则代理服务器需要返回报错给客户端。</li>
+</ol>
+<h5 id="uri自动扩展和主机名解析">Uri自动扩展和主机名解析</h5>
+<p>根据是否存在代理浏览器对uri的解析行为会存在不同，当用户输入的某个主机名无法正常解析浏览器会尝试对主机名进展扩展，例如在浏览器内只输入了google，没有www前缀和.com，此时浏览器可能会进行自动补齐，并且在一些dns解析中容许客户只输入主机名前缀，例如用户在google.com域内，在浏览器内只输入mail01，dns解析服务器会解析mail01.google.com。<br>
+还有一种情况，客户端在浏览器内输入不携带前缀和后缀的主机名时，浏览器会把这个请求发送到第三方页面，第三方页面给出可能的页面结果（302 location重定向指向可能页面地址）。</p>
+<p>没有代理时的uri解析</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200413223137.png" alt="P16" loading="lazy"></figure>
+<p>存在显式代理时的uri解析：<br>
+此时过程不太一样，浏览器先和代理服务器进行连接，连接成功之后直接向代理服务器发送的request中携带客户输入的uri，不会进行自动扩容以及添加本地域名后缀。<br>
+此时代理服务器就需要模仿浏览器行为进行自动扩充、添加本地域名后缀操作。</p>
+<p>存在非显式代理时的uri解析：<br>
+在这个时候会遇到一些问题，dns解析时获取的某个站点地址可能存在多个，但客户端只会选择其中一个IP地址去进行tcp连接，假设这个站点其实已经不可用，但是非显式代理为tcp劫持方式和客户端进行三次握手，客户端会认为和服务器成功建立tcp连接，之后进行http报文传输，proxy此时再去和目的服务器进行交互，此时才会发现这个服务器不可达了。<br>
+这个时候proxy就要尝试读取host（假设是域名不是IP）自身去进行dns解析，再去和解析结果里的地址挨个去建立tcp连接，如果host字段为IP地址，可能的办法为进行反向地址查询，但是通过IP查询域名很多时候并不会有结果，并不是所有站点都有反向记录。</p>
+<h4 id="路径追踪">路径追踪</h4>
+<p>如何判断http报文在传输中经过了多少次代理，这个问题和网络中设备经过多少跳一样，下面重点介绍两种方式。</p>
+<h5 id="via">via</h5>
+<p>Via首部列出了报文经过的每个proxy、http网关有关的信息，报文每经过一个相关节点，节点信息都会被加入到via，不管是从client到server还是从server到client。<br>
+假设从client到server经过了proxy01、proxy02、proxy03，那么client发送到server的http request中将会看到via=1.1 proxy01.com,1.1 proxy02.com,proxy03.com。从server发送到client的response将会看到内容顺序相反的via header。</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200413223203.png" alt="P18" loading="lazy"></figure>
+<p>Via首部格式：</p>
+<pre><code class="language-http">Via: [ &lt;protocol-name&gt; &quot;/&quot; ] &lt;protocol-version&gt; &lt;host&gt; [ &quot;:&quot; &lt;port&gt; ]
+or
+Via: [ &lt;protocol-name&gt; &quot;/&quot; ] &lt;protocol-version&gt; &lt;pseudonym&gt;
+</code></pre>
+<p>协议名称为可选，并不是所有的都是http比如http网关中该字段可能为ftp。<br>
+协议版本：1.0、1.1(http)。<br>
+域名或者别名：域名表明proxy、网关设备的域名或者为了防止别人追踪而使用的别名。</p>
+<p>server header:对原始服务器的web软件描述信息。</p>
+<p>Via、server首部示例：</p>
+<pre><code class="language-http">server: meinheld/0.6.1
+via: 1.1 ec7e029564542f4eb6196ab046d31627.cloudfront.net (CloudFront)
+</code></pre>
+<p>via信息隐藏：<br>
+隐藏某一跳设备后的via信息，将多个协议版本相同的via序列合并成一个，举例：</p>
+<pre><code class="language-http">Via=1.1 proxyB1，1.1 proxyB2，1.0 proxyA 
+</code></pre>
+<p>隐藏后:</p>
+<pre><code class="language-http">Via=1.1 proxyB，1.0 proxyA
+</code></pre>
+<p>将proxyB1后的proxyB2隐藏，对外展现的proxyB1、proxyB2隐藏成一个proxyB。</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200413223219.png" alt="P19" loading="lazy"></figure>
+<h5 id="trace-method">Trace method</h5>
+<p>Via参数对于客户端而言只能在接受到服务器的回应报文时确认从客户端到服务器经历了多少proxy，但是无法做到主动探测中间每一个proxy的存在，trace method可以实现这一点，在前面1.2.1的部分其实已经描述过这部分：<br>
+每一个收到max-forward=0的proxy都需要回应http 200 ok（即便该trace报文的目的地不是该proxy），并且在回应的报文中携带trace报文原始报文（从start-line到body结束），也可以说将原始报文反射。<br>
+这样如果从client到接受到max-forward=0的proxy中间还存在其他proxy，通过这个返回的200 ok中携带via字段就可以判断中间还经历了哪些proxy。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200413223233.png" alt="P20" loading="lazy"></figure>
+<p>上图展示了trace的过程，clinet发送的http报文method为trace，max-forward=2，经过proxy B1、proxyB2之后到达proxyA，此时max-forward=0，Via= 1.1 proyxB1,1.1 proxy B2，这个报文会被proxyA reflect回client，其中content-type=message/http，via=1.1 proxyB2,1.1 proxy b1。</p>
+<h4 id="代理认证">代理认证</h4>
+<p>当某个请求到达代理服务器，代理服务器可以回一个407 proxy authorization required，其中携带header proxy-authenticate，客户端再次发送的请求method中携带hearder proxy-authorization用以传输认证的账号密码，认证通过之后proxy才容许发送该请求的客户端通过proxy访问相应的资源。<br>
+如果认证失败，proxy回应的依旧是status code 407，只是描述会变成proxy authentication incorrect。</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200413223241.png" alt="P21" loading="lazy"></figure>
+<p>上图展示了一个proxy认证的过程，其中客户端回应的proxy authorization内携带的YnJp0mZvbw==为base64编码，通过解码就可以看到用户实际输入的账号。密码。</p>
+<p>Proxy -authentication header格式：</p>
+<pre><code class="language-http">Proxy-Authenticate: &lt;type&gt; realm=&lt;realm&gt;
+</code></pre>
+<p>Type字段代表认证类型，基本类型为basic。<br>
+Relam内的内容为proxy上的描述信息。</p>
+<h4 id="代理的相互操作性">代理的相互操作性</h4>
+<h5 id="对于不支持的首部处理">对于不支持的首部处理</h5>
+<p>Proxy不一定能够理解所有经由其传输的首部含义，对于这些proxy必须保持原封不动的往下一跳转发。</p>
+<h5 id="options-method-allow-header">Options method、allow header</h5>
+<p>客户端发送options用以查询服务器对某个资源的method支持情况，服务器则使用allow header回应支持情况。</p>
+<p>语法：</p>
+<ol>
+<li>options：</li>
+</ol>
+<pre><code class="language-http">OPTIONS /index.html HTTP/1.1
+OPTIONS * HTTP/1.1
+</code></pre>
+<p>可以选择查询某个具体资源（url）。如果为*代表整个站点上所有的资源。</p>
+<ol start="2">
+<li>allow</li>
+</ol>
+<pre><code class="language-http">Allow: &lt;http-methods&gt;
+</code></pre>
+<p>测试示例：</p>
+<pre><code class="language-shell">curl -X OPTIONS -D http_allow.log http://www1.dbappsecurity.com.cn/index.aspx
+</code></pre>
+<p>查看http_allow.log内的内容：</p>
+<pre><code class="language-http">HTTP/1.1 200 OK
+Date: Thu, 11 Apr 2019 07:36:40 GMT
+Content-Length: 0
+Allow: OPTIONS, TRACE, GET, HEAD, POST
+Public: OPTIONS, TRACE, GET, HEAD, POST
+X-Frame-Options: SAMEORIGIN
+Accept-Ranges: bytes
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#web%E7%9A%84%E4%B8%AD%E9%97%B4%E5%AE%9E%E4%BD%93">Web的中间实体</a>
+<ul>
+<li><a href="#%E4%BB%A3%E7%90%86%E7%9A%84%E5%88%86%E7%B1%BB">代理的分类</a></li>
+<li><a href="#%E4%BB%A3%E7%90%86%E4%B8%8E%E7%BD%91%E5%85%B3%E7%9A%84%E5%8C%BA%E5%88%AB">代理与网关的区别</a></li>
+</ul>
+</li>
+<li><a href="#why-proxy">Why proxy？</a></li>
+<li><a href="#%E4%BB%A3%E7%90%86%E8%BD%AC%E5%8F%91%E7%9B%B8%E5%85%B3">代理转发相关</a>
+<ul>
+<li><a href="#%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84%E9%83%A8%E7%BD%B2%E4%BD%8D%E7%BD%AE">代理服务器的部署位置</a></li>
+<li><a href="#%E4%BB%A3%E7%90%86%E7%9A%84%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84">代理的层次结构</a></li>
+<li><a href="#proxy%E7%9A%84%E5%8A%A8%E6%80%81%E9%80%89%E6%8B%A9parent-proxy">Proxy的动态选择parent proxy</a></li>
+<li><a href="#%E6%B5%81%E9%87%8F%E5%A6%82%E4%BD%95%E8%BD%AC%E5%8F%91%E5%88%B0%E4%BB%A3%E7%90%86">流量如何转发到代理</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BB%A3%E7%90%86%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98">代理相关问题</a>
+<ul>
+<li><a href="#uri-%E9%83%A8%E5%88%86-or-%E5%85%A8%E9%83%A8">URI 部分 or 全部</a></li>
+<li><a href="#%E5%90%8C%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A4%9A%E4%B8%AA%E7%AB%99%E7%82%B9%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8">同一个服务器多个站点（虚拟服务器）</a></li>
+<li><a href="#%E4%B8%8E%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84%E5%8C%BA%E5%88%AB">与虚拟服务器的区别</a></li>
+<li><a href="#%E6%97%A0%E6%84%9F%E7%9F%A5%E7%9A%84%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8">无感知的代理服务器</a></li>
+<li><a href="#uri%E8%87%AA%E5%8A%A8%E6%89%A9%E5%B1%95%E5%92%8C%E4%B8%BB%E6%9C%BA%E5%90%8D%E8%A7%A3%E6%9E%90">Uri自动扩展和主机名解析</a></li>
+</ul>
+</li>
+<li><a href="#%E8%B7%AF%E5%BE%84%E8%BF%BD%E8%B8%AA">路径追踪</a>
+<ul>
+<li><a href="#via">via</a></li>
+<li><a href="#trace-method">Trace method</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BB%A3%E7%90%86%E8%AE%A4%E8%AF%81">代理认证</a></li>
+<li><a href="#%E4%BB%A3%E7%90%86%E7%9A%84%E7%9B%B8%E4%BA%92%E6%93%8D%E4%BD%9C%E6%80%A7">代理的相互操作性</a>
+<ul>
+<li><a href="#%E5%AF%B9%E4%BA%8E%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84%E9%A6%96%E9%83%A8%E5%A4%84%E7%90%86">对于不支持的首部处理</a></li>
+<li><a href="#options-method-allow-header">Options method、allow header</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/http-xue-xi-bi-ji-2-http-lian-jie-guan-li/">
+              <h3 class="post-title">
+                HTTP学习笔记 （2） HTTP连接管理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

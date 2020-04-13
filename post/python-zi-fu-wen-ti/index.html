@@ -1,0 +1,344 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title> python字符问题 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title=" python字符问题 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="二进制
+这里不做过多介绍，网络物理传输介质是二进制，计算机最终存储的也是二进制，bit。
+ascii
+数字可以直接十进制与二进制转换，以二进制存储。但是非数字的字符如何存储？ 计算机最开始是在美国，所以产生了将英文字符-十进制
+数字的对应关..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+               python字符问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="二进制">二进制</h2>
+<p>这里不做过多介绍，网络物理传输介质是二进制，计算机最终存储的也是二进制，bit。</p>
+<h2 id="ascii">ascii</h2>
+<p>数字可以直接十进制与二进制转换，以二进制存储。但是非数字的字符如何存储？ 计算机最开始是在美国，所以产生了将英文字符-十进制<br>
+数字的对应关系表，也就是ascii编码。</p>
+<h2 id="中文编码">中文编码</h2>
+<p><code>ascii</code>不支持中文，所以中国制定了自己的字符编码。<br>
+<code>GB2312</code>-国标码，1981年产生，常用汉字。<br>
+<code>GBK1.0</code>-1995年发布，向下兼容，收录更多的汉字，以及中日韩里的汉字。<br>
+<code>GB18030</code>-2000年发布，收录更多汉字以及少数名族。<br>
+<code>BIG5</code>-台湾用，繁体字。</p>
+<h2 id="unicode">Unicode</h2>
+<p>万国码。解决不同国家之间的字符编码相互兼容问题，由国家代码+本国的字符编码组成，最小2byte(国家代码+<code>ascii</code>)，但是很多国家<br>
+的字符编码，1byte不够用，所以<code>unicode</code>长度不固定。<br>
+<code>ISO</code>制定。</p>
+<h2 id="字符编码方式">字符编码方式</h2>
+<p>Unicode是一种兼容各国语言的编码方式。基本每个<br>
+国家都有自己的字符到二进制的编码方式,常见的<code>ascii</code>、<code>GBK</code>。常见的乱码就是由于编码方式不一致导致，统一使用unicode<br>
+虽然可以解决乱码的问题，但是对于传输而言效率并不是最高，如果传输的都是<code>ascii</code>，那使用unicode编码方式进行传输，就会<br>
+多占用字节空间(也就是传输的所需带宽会增加)。</p>
+<p>因此<code>utf-8</code>产生。</p>
+<p><code>utf</code>-Unicode Transformation Format，对于<code>Unicode</code>编码的压缩和优化。</p>
+<p><code>utf-8</code>的编码长度并不固定，而是根据字符内容不同，如英文会变编译为1字节长度，中文常见字符3字节。<br>
+基本上可以认为<code>ascii</code>编码是<code>utf-8</code>编码的一个子集，因此使用<code>ascii</code>进行编码的，在<code>utf-8</code>下可以正常显示。</p>
+<p><strong>总结下：unicode可以看做一种实现方式、标准（也有Unicode方式编码），但是具体使用时是utf-8，实际还有utf-16、utf-32</strong></p>
+<h2 id="python2-3中的字符编码">python2 3中的字符编码</h2>
+<ul>
+<li>python2<br>
+<code>python2</code>中默认字符编码方式为<code>ascii</code>，可以手动更改字符编码方式，但是在内存中存储、执行的就是手动声明的编码。<br>
+比如在<code>python2</code>中手动声明字符编码为<code>utf-8</code>，那内存中存储、执行时也会是<code>utf-8</code>，中文windows一般是支持<code>Unicode</code>和<code>GBK</code>，所<br>
+以结果可想而知，乱码。</li>
+<li>python3<br>
+<code>python3</code>中就不太一样了，默认<code>Unicode</code>，在内存中也是<code>Unicode</code>，windows支持<code>Unicode</code>，所以不会乱码，<strong>并且</strong>:即便声明了<br>
+编码方式，在内存中还是<code>Unicode</code>，不怕乱码，在这里其实<code>python3</code>存在自动的<code>decode</code>、<code>encode</code>，到内存时声明的编码会自动<code>decode</code>为<br>
+<code>Unicode</code>，而存储到文件时又会自动将<code>Unicode</code> <code>encode</code>为声明的编码。</li>
+</ul>
+<h4 id="编码与解码">编码与解码</h4>
+<p>编码：<code>encode</code>，从别的编码方式到<code>Unicode</code><br>
+解码：<code>decode</code>，从<code>Unicode</code>到别的编码方式</p>
+<figure data-type="image" tabindex="1"><img src="https://img2018.cnblogs.com/blog/1527257/201811/1527257-20181107162220149-1623138375.png" alt="image" loading="lazy"></figure>
+<h3 id="数据类型-字符串">数据类型-字符串</h3>
+<p>-有序、可迭代</p>
+<ul>
+<li>不可变</li>
+</ul>
+<pre><code class="language-python">a = 'hack'
+print(id(a))
+a = 'tools'
+print(id(a))
+
+60878240
+60878144
+</code></pre>
+<p>可以看到内存位置发生了变化，所以重新赋值，原始变量已经变化。</p>
+<h2 id="python-2-3中的字符串">python 2 3中的字符串</h2>
+<p>虽然2和3中都存在<code>str</code>类型，但是2 3中两者区别却很大。</p>
+<ul>
+<li>python2<br>
+python2中的字符串直接查看字符是以16进制方式显示的数值，虽然<code>print</code>出来的并不是。</li>
+</ul>
+<pre><code class="language-python">&gt;&gt;&gt; s
+'\xe8\xb7\xaf\xe9\xa3\x9e'   #python2中的字符串
+</code></pre>
+<p>在python2中字符串的类型<code>str</code>其实和<code>bytes</code>没什么区别，所以可以叫做<code>字节串</code>,<code>bytes</code>里的内容就是字符的编码以16进制展示。<br>
+在python2中字符串前加上<code>b</code>，之后查看该字符串类型就是<code>bytes</code>。</p>
+<p>那么<code>bytes</code>类型实际干嘛呢？ 对文件(图片、视频等file)操作时，直接以二进制操作，此时就要求数据类型为<code>bytes</code>。</p>
+<pre><code class="language-python">a = 'hack'
+print(type(a))
+b = b'hack'
+print(type(b))
+
+&lt;type 'str'&gt;
+&lt;type 'bytes'&gt;
+</code></pre>
+<p>同时在python2中还存在一个<code>unicode</code>类型，<code>str</code> <code>decode</code>之后的类型就是<code>unicode</code>。</p>
+<pre><code class="language-python">&gt;&gt;&gt; s
+'\xe8\xb7\xaf\xe9\xa3\x9e'
+&gt;&gt;&gt; s2 = s.decode(&quot;utf-8&quot;)
+&gt;&gt;&gt; s2
+u'\u8def\u98de'
+&gt;&gt;&gt; type(s2)
+&lt;type 'unicode'&gt;
+</code></pre>
+<p>或者直接在字符串前加上<code>u</code>，这样该字符串的变量数据类型就是<code>unicode</code>。</p>
+<ul>
+<li>python3<br>
+3中就比较简单了，<code>str</code>是<code>str</code>，<code>bytes</code>是<code>bytes</code>，<code>str</code>默认就是<code>unicode</code>，也不需要再去手动地<code>decode</code>。</li>
+</ul>
+<pre><code class="language-python">a = 'hack'
+b = u'hack'
+print(type(a))
+print(type(b))
+&lt;class 'str'&gt;
+&lt;class 'str'&gt;
+</code></pre>
+<p>可以看到<code>u'hack'</code>也是<code>str</code>。</p>
+<h3 id="bytes">bytes</h3>
+<p>python3中字符<code>str</code>在内存中以<code>unicode</code>编码表示，如果需要通过网络传输或者保存到磁盘，需要转换为<code>bytes</code>类型。</p>
+<p>不同于<code>str</code>，<code>bytes</code>每个字符占用1字节。</p>
+<p>可以使用<code>encode()</code>,<code>decode()</code>对<code>str</code>、<code>bytes</code>之间的相互转换。</p>
+<pre><code class="language-python">a = 'abc中文'
+print(a.encode('utf-8',errors='ignore'))
+b = a.encode('utf-8',errors='ignore')
+print(type(b))
+b'abc\xe4\xb8\xad\xe6\x96\x87'
+&lt;class 'bytes'&gt;
+</code></pre>
+<p>在这里字符串<code>a</code>的内容为<code>abc中文</code>，将<code>unicode</code>编码<code>encode</code>之后<code>print</code>可以发现中文已经被转成16进制<code>\xe4\xb8\xad\xe6\x96\x87</code>，<br>
+而<code>abc</code>还是<code>abc</code>，这里显示的<code>abc</code>不是16进制的<code>abc</code>，而是被python做了转换，直接显示英文的<code>abc</code>，实际内容应该是<code>\x61\x62\x63</code>。<br>
+用下面的代码验证下：</p>
+<pre><code class="language-python">c = b'\x61\x62\x63\xe4\xb8\xad\xe6\x96\x87'
+print(c)
+print(c.decode('utf-8'))
+执行结果:
+b'abc\xe4\xb8\xad\xe6\x96\x87'
+abc中文
+</code></pre>
+<p>如果这样：</p>
+<pre><code class="language-python">d = b'abc\x64'
+print(d)
+执行结果：
+b'abcd'
+</code></pre>
+<p>说明，直接创建<code>bytes</code>类型数据时写<code>b'abc'</code>，也是被自动转换了，严格来写，<code>bytes</code>类型数据里面的内容都是<code>\x12</code>这种形式。</p>
+<p>无法包含使用该编码方式无法解码的内容，会出现报错，可以传入<code>erros='ignore'</code>忽略报错。</p>
+<pre><code class="language-python">print(len('abc'.encode('utf-8',errors='ignore')))
+print(len('中文'.encode('utf-8',errors='ignore')))
+3
+6
+</code></pre>
+<p>同时，也可以看出来，utf-8的编码方式下，英文一般一个字符占用一个字节，而中文一个字符占用三个字节。(<code>len()</code>对于<code>bytes</code><br>
+统计的是其占用的字节长度)。</p>
+<h2 id="python标准库之struct">python标准库之struct</h2>
+<p>在前面提到了<code>bytes</code>类型的字符串，实际python的数据类型并没有专门的字节类型(16进制)。而<code>struct</code>可以把任意的数据类型转换成以<br>
+字节类型(<code>bytes</code>)的方式展现。</p>
+<pre><code class="language-python">import struct
+import binascii
+
+values = ('中文'.encode('utf-8'))
+pack_data =struct.pack('6s',values)
+print(pack_data)
+print(f'packed value {binascii.hexlify(pack_data)}')
+</code></pre>
+<p>执行结果：<br>
+<code>b'\xe4\xb8\xad\xe6\x96\x87' packed value b'e4b8ade69687'</code><br>
+其中<code>3s</code>表示3个string类型的数据，当然这里也支持其余的数据类型，具体可以在官方文档中查看。</p>
+<p>而解析也很简单，使用<code>unpack()</code>即可。</p>
+<pre><code class="language-python">print(struct.unpack('3s',pack_data))
+</code></pre>
+<p><a href="https://docs.python.org/3/library/struct.html">官方文档</a></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BA%8C%E8%BF%9B%E5%88%B6">二进制</a></li>
+<li><a href="#ascii">ascii</a></li>
+<li><a href="#%E4%B8%AD%E6%96%87%E7%BC%96%E7%A0%81">中文编码</a></li>
+<li><a href="#unicode">Unicode</a></li>
+<li><a href="#%E5%AD%97%E7%AC%A6%E7%BC%96%E7%A0%81%E6%96%B9%E5%BC%8F">字符编码方式</a></li>
+<li><a href="#python2-3%E4%B8%AD%E7%9A%84%E5%AD%97%E7%AC%A6%E7%BC%96%E7%A0%81">python2 3中的字符编码</a><br>
+*
+<ul>
+<li><a href="#%E7%BC%96%E7%A0%81%E4%B8%8E%E8%A7%A3%E7%A0%81">编码与解码</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B-%E5%AD%97%E7%AC%A6%E4%B8%B2">数据类型-字符串</a></li>
+</ul>
+</li>
+<li><a href="#python-2-3%E4%B8%AD%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2">python 2 3中的字符串</a>
+<ul>
+<li><a href="#bytes">bytes</a></li>
+</ul>
+</li>
+<li><a href="#python%E6%A0%87%E5%87%86%E5%BA%93%E4%B9%8Bstruct">python标准库之struct</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/mo-kuai/">
+              <h3 class="post-title">
+                模块
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

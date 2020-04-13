@@ -1,0 +1,374 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tshark、pyshark学习笔记 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Tshark、pyshark学习笔记 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="pyshark
+抓取报文
+创建一个函数进行抓包，返回一个对象,设置过滤条件，存在两种过滤，一种是抓包时的过滤条件，使用tcpdump的过滤方式进行过滤，还有就是wireshark的过滤，常见的param可以查看livecapture源文件
+..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Tshark、pyshark学习笔记
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="pyshark">pyshark</h3>
+<h4 id="抓取报文">抓取报文</h4>
+<p>创建一个函数进行抓包，返回一个对象,设置过滤条件，存在两种过滤，一种是抓包时的过滤条件，使用<code>tcpdump</code>的过滤方式进行过滤，还有就是<code>wireshark</code>的过滤，常见的<code>param</code>可以查看<code>livecapture</code>源文件</p>
+<pre><code class="language-python">import pyshark
+
+def get_liv_ecap(display_filter_name = '',tcpdump_filter_name = '',wfile=''):
+    cap  = pyshark.LiveCapture(interface = 'WLAN',
+                               bpf_filter= tcpdump_filter_name,
+                               display_filter= display_filter_name,
+                               output_file=r'.\\'+wfile
+    )
+    return cap
+</code></pre>
+<p><code>livecapture</code> 的<code>param</code>:</p>
+<pre><code class="language-powershell">    :param interface: Name of the interface to sniff on or a list of names (str). If not given, runs on all interfaces.
+    :param bpf_filter: BPF filter to use on packets.
+    :param display_filter: Display (wireshark) filter to use.
+    :param only_summaries: Only produce packet summaries, much faster but includes very little information
+    :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
+    :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
+    'WPA-PWK'. Defaults to WPA-PWK).
+    :param output_file: Additionally save live captured packets to this file.
+    :param decode_as: A dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
+    to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
+    it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
+    :param tshark_path: Path of the tshark binary
+    :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+    :param capture_filter: Capture (wireshark) filter to use.
+    :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+    :param use_json: Uses tshark in JSON mode (EXPERIMENTAL). It is a good deal faster than XML
+    but also has less information. Available from Wireshark 2.2.0.
+    :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {&quot;--param&quot;: &quot;value&quot;}
+</code></pre>
+<h4 id="查看报文内容">查看报文内容</h4>
+<p>打印数据包内容,对于实时抓取的数据包可以使用<code>sniff_continuously</code>设置抓取的数目，<code>for</code>循环获取数据包：</p>
+<pre><code class="language-python">def show_packet():
+    cap = get_liv_ecap(display_filter_name='http',tcpdump_filter_name='tcp port 80',wfile='test.pcap')
+    for packet in cap.sniff_continuously(packet_count= 10 ):
+        print(packet)
+</code></pre>
+<h4 id="读取报文">读取报文</h4>
+<pre><code class="language-python">def readpacket(file = ''):
+    cap = pyshark.FileCapture(file)
+    return cap
+</code></pre>
+<h4 id="报文内容解析">报文内容解析</h4>
+<p>查看报文内容,报文中有哪些字段可以解析，可以在console模式下直接查看，值的内容是str还是dict，都可以直接看到</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/image-20191031005003706.png" alt="image-20191031005003706" loading="lazy"></figure>
+<pre><code class="language-python">def packet_content():
+    i = 0
+    packets= readpacket(r'.\test.pcap')
+    for packet in packets:
+        print(f'packet { i } information:')
+        print(f'eth src add is {packet.eth.layer_name}')
+        print(f'ip src add is {packet.ip.src}')
+        print(f'transport layer is {packet.layers[2]._layer_name}')
+        print(f'application layer name is {packet.layers[3]._layer_name}')
+        print('-' *  50)
+        i += 1
+</code></pre>
+<h4 id="apply_on_packet函数">apply_on_packet函数</h4>
+<p><code>apply_on_packets</code>函数，接受一个函数，并将这个函数用到所有数据包</p>
+<pre><code class="language-python">def get_packet_count():
+    cap =readpacket(r'.\test.pcap')
+    count = []
+    def counter(*args):
+        count.append(args[0])
+
+cap.apply_on_packets(counter)
+
+return len(count)
+
+if __name__ == '__main__':
+    print(get_packet_count())
+</code></pre>
+<h3 id="tshark">Tshark</h3>
+<h4 id="常用参数说明">常用参数说明</h4>
+<h5 id="抓取">抓取</h5>
+<pre><code class="language-shell">  -i &lt;interface&gt;           接口名或网卡编号 (默认: 第一个非环回接口)
+  -f &lt;capture filter&gt;      使用libpcap过滤表达式进行包过滤
+  -s &lt;snaplen&gt;             设置每个抓包的大小，默认为65535。
+                          （相当于tcpdump的-s，tcpdump默认抓包的大小仅为68）
+  -p                       不使用混杂模式抓捕报文（即只抓取与本机有关的流量）
+  -I                       如果支持则启用镜像模式
+  -B &lt;buffer size&gt;         内核缓存大小 (默认2MB)
+  -y &lt;link type&gt;           链路层类型 (默认为找到的第一个协议)
+  --time-stamp-type &lt;type&gt; 接口时间戳类型
+  -D                       列出所有接口并退出
+  -L                       列出所有接口链路层类型并退出（供-y参数使用）
+  --list-time-stamp-types  列出所有接口时间戳类型并退出（供--time-stamp参数使用）
+</code></pre>
+<h5 id="捕获终止条件">捕获终止条件</h5>
+<pre><code class="language-shell">  -c &lt;packet count&gt;        捕获到n个包时停止 (默认不限，持续捕获)
+  -a &lt;autostop cond.&gt; ...  duration:NUM - 捕获进行NUM后停止
+                           filesize:NUM - 输出文件大于NUM KB后停止
+                              files:NUM - 输出超过NUM个文件后停止
+</code></pre>
+<h5 id="捕获输出">捕获输出</h5>
+<pre><code class="language-shell">  -b &lt;ringbuffer opt.&gt; ... duration:NUM - 在NUM秒后写入下一个文件（文件名由-w参数决定）
+                           interval:NUM - create time intervals of NUM secs
+                           filesize:NUM - 在文件大于NUM KB后写入下一个文件
+                              files:NUM - 循环缓存: 在NUM个文件后替换早前的
+</code></pre>
+<h5 id="读取文件">读取文件</h5>
+<pre><code class="language-shell">-r &lt;infile|-&gt; 设置需要读取的文件名及路径(或'-'表示标准输入，从终端输入)
+</code></pre>
+<h5 id="分析处理">分析处理</h5>
+<pre><code class="language-shell">  -2                       执行two-pass分析
+  -M &lt;packet count&gt;        执行会话自动重置
+  -R &lt;read filter&gt;         包读取过滤使用wireshark显示过滤表达式(配合-2参数)
+  -Y &lt;display filter&gt;      包显示过滤使用wireshark显示过滤表达式
+  -n                       不进行名称解析 (def: all enabled)
+  -N &lt;name resolve flags&gt;  启用指定的地址名字解析: &quot;mnNtdv&quot;
+                           (“m”代表MAC层，“n”代表网络层，“t”代表传输层，“N”代表当前异步DNS查找。)
+  -d &lt;layer_type&gt;==&lt;selector&gt;,&lt;decode_as_protocol&gt; ...
+                           &quot;解析为&quot;,详见man帮助页面。例: tcp.port==8888,http
+                           （注意选择子和解包协议之间不能留空格）
+  -H &lt;hosts file&gt;          读取主机列表文件，将被写入捕获的文件(Implies -W n)
+  --enable-protocol &lt;proto_name&gt;
+                           启用协议报文解析
+  --disable-protocol &lt;proto_name&gt;
+                           不对指定协议报文解析
+  --enable-heuristic &lt;short_name&gt;
+                           启用协议报文启发式解析
+  --disable-heuristic &lt;short_name&gt;
+                           不对指定协议报文启发式解析
+</code></pre>
+<h5 id="输出">输出</h5>
+<pre><code class="language-shell">  -w &lt;outfile|-&gt;           使用pcapng格式将报文写入&quot;outfile&quot;文件
+                           (或'-'表示标准输出，直接显示在终端)
+  -C &lt;config profile&gt;      启动时使用指定的配置文件
+  -F &lt;output file type&gt;    设置输出文件格式类型, 默认为pcapng格式
+                           &quot;-F&quot;留空则列出所有的文件类型
+  -V                       输出中增加报文层次树(包详细信息)
+  -O &lt;protocols&gt;           仅显示以下协议的详细信息，逗号分割
+  -P                       每写入一个文件后进行包情况汇总
+  -S &lt;separator&gt;           数据包之间的行分割符
+  -x                       输出中增加16进制和ascii字符信息(报文按字节显示)
+  -T pdml|ps|psml|json|jsonraw|ek|tabs|text|fields|?
+                           文本输出格式 (默认文本:text)
+  -j &lt;protocolfilter&gt;      当-T ek|pdml|json 设置时协议层过滤
+                           (例：&quot;ip ip.flags text&quot;, 过滤不展开的所有字节点，除非过滤中有指定的子节点）
+  -J &lt;protocolfilter&gt;      当 -T ek|pdml|json 选项设置时进行顶层协议过滤，
+                           (例: &quot;http tcp&quot;, 过滤展开的所有字节点）
+  -e &lt;field&gt;               当 -T fields 设置时打印字段 (如tcp.port,_ws.col.Info)
+                           此选项可以多个用于打印多个字段
+  -E&lt;fieldsoption&gt;=&lt;value&gt; 当-Tfields选项启用时用于输出配置:
+     bom=y|n               打印UTF-8 BOM
+     header=y|n            选择首行是否输出字段名（类似表头）
+     separator=/t|/s|&lt;char&gt; 选择字段采用tab、空格、指定可打印字符为分割符
+     occurrence=f|l|a      打印第一个、最后一个或全部出现的数值（默认全部）
+     aggregator=,|/s|&lt;char&gt; 选择字段采用逗号、空格、指定可打印字符聚合字段
+     quote=d|s|n           选择对数值采用双引号、单引号、不用引号
+  -t a|ad|d|dd|e|r|u|ud|?  输出格式化的时间戳(默认r: rel. 优先)
+  -u s|hms                 输出格式化秒(默认s:秒)
+  -l                       每个包之后就刷新标准输出
+  -q                       向终端输出少量信息 (e.g. 当使用统计)
+  -Q                       仅向stderr输出确切错误信息(比-q信息更少)
+  -g                       启用组用户读取输出文件
+  -W n                     如果支持，保存额外信息到文件中
+                           n = 写入网络地址解析信息
+  -X &lt;key&gt;:&lt;value&gt;         扩展选项，详见man页面
+  -U tap_name              PDUs专家模式, 详见man帮助页面
+  -z &lt;statistics&gt;          大量统计,详见man帮助页面
+  --capture-comment &lt;comment&gt;
+                           在最新创建的输出文件中增加捕获注释(仅支持pcapng格式)
+  --export-objects &lt;protocol&gt;,&lt;destdir&gt; 保存指定导出协议对象到指定目录                           
+  --color                  在输出的文本格式中支持类似Wireshark图形界面的色彩,终端需要支持24位彩色
+                           同时支持pdml、psml的色彩属性（注：这两张属性非标准）                         
+  --no-duplicate-keys      如果-T json设置, 合并重复键，将多个值归并在一个键下的数组中
+  --elastic-mapping-filter &lt;protocols&gt; 如果指定-G elastic-mapping,设置仅mapping文件中指定的协议
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#pyshark">pyshark</a>
+<ul>
+<li><a href="#%E6%8A%93%E5%8F%96%E6%8A%A5%E6%96%87">抓取报文</a></li>
+<li><a href="#%E6%9F%A5%E7%9C%8B%E6%8A%A5%E6%96%87%E5%86%85%E5%AE%B9">查看报文内容</a></li>
+<li><a href="#%E8%AF%BB%E5%8F%96%E6%8A%A5%E6%96%87">读取报文</a></li>
+<li><a href="#%E6%8A%A5%E6%96%87%E5%86%85%E5%AE%B9%E8%A7%A3%E6%9E%90">报文内容解析</a></li>
+<li><a href="#apply_on_packet%E5%87%BD%E6%95%B0">apply_on_packet函数</a></li>
+</ul>
+</li>
+<li><a href="#tshark">Tshark</a>
+<ul>
+<li><a href="#%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E">常用参数说明</a>
+<ul>
+<li><a href="#%E6%8A%93%E5%8F%96">抓取</a></li>
+<li><a href="#%E6%8D%95%E8%8E%B7%E7%BB%88%E6%AD%A2%E6%9D%A1%E4%BB%B6">捕获终止条件</a></li>
+<li><a href="#%E6%8D%95%E8%8E%B7%E8%BE%93%E5%87%BA">捕获输出</a></li>
+<li><a href="#%E8%AF%BB%E5%8F%96%E6%96%87%E4%BB%B6">读取文件</a></li>
+<li><a href="#%E5%88%86%E6%9E%90%E5%A4%84%E7%90%86">分析处理</a></li>
+<li><a href="#%E8%BE%93%E5%87%BA">输出</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/liang-ge-dhcp-you-qu-de-wen-ti/">
+              <h3 class="post-title">
+                两个DHCP有趣的问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

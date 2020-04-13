@@ -1,0 +1,381 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>两个DHCP有趣的问题 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="两个DHCP有趣的问题 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="前言
+这两个问题都是很久之前处理的问题，但直到现在我依旧觉得很有趣，问题本身很有趣，解决问题的过程也非常有趣，让我印象深刻，不管是技术来说还是其他的，总之，都是非常有趣。
+
+第一个问题
+第一个问题和DHCP Option 82有关，下面先来..." />
+    <meta name="keywords" content="TroubleShooting,技术杂谈" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              两个DHCP有趣的问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                13 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/4J8Zg2iT1/" class="post-tag">
+                  # TroubleShooting
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/ERd1sKPdu/" class="post-tag">
+                  # 技术杂谈
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="前言">前言</h3>
+<p>这两个问题都是很久之前处理的问题，但直到现在我依旧觉得很有趣，问题本身很有趣，解决问题的过程也非常有趣，让我印象深刻，不管是技术来说还是其他的，总之，都是非常有趣。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200412231640.png" alt="P1" loading="lazy"></figure>
+<h3 id="第一个问题">第一个问题</h3>
+<p>第一个问题和DHCP Option 82有关，下面先来看一丢丢关于DHCP Option 82的基础知识。</p>
+<h4 id="dhcp-option-82">DHCP Option 82</h4>
+<p>DHCP Option 82全称为Relay Agent Information Option，从名字里就可以看出来和DHCP Relay相关，简单来说：DHCP Relay设备将客户端的DHCP报文三层转发给DHCP服务器时可以通过该Option携带一些信息用户标识客户端的身份，而DHCP服务器呢可以通过该Option指定一个地址分配策略。</p>
+<p>DHCP Option 82有两个sub option组成：</p>
+<ol>
+<li>
+<p>Agent Remote ID Sub-option：该字段标明代理设备，一般配置为系统的sysname，在一个网络内不容许重复，这样DHCP Server才能针对每台设备指定唯一的地址分配策略。</p>
+<p>SubOpt Len Agent Remote ID<br>
++------+------+------+------+------+------+------+------+--<br>
+| 2 | n | r1 | r2 | r3 | r4 | r5 | r6 | ...<br>
++------+------+------+------+------+------+------+------+--</p>
+</li>
+<li>
+<p>Agent Circuit ID Sub-option：该字段标明接口，一般而言设备会用接口编号以及接口的VLAN ID填充该字段。</p>
+<p>+------+------+------+------+------+------+------+------+--<br>
+| 1 | n | c1 | c2 | c3 | c4 | c5 | c6 | ...<br>
++------+------+------+------+------+------+------+------+--</p>
+</li>
+</ol>
+<p>通过Agent Remote ID和Agent Circuit ID就可以唯一的标识到具体的某台DHCP Relay设备上的某一个端口。</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200412231702.png" alt="P2" loading="lazy"></figure>
+<p>以上图为例，SW1 SW2都为DHCP Relay设备，其GE0/0/1、GE0/0/2接口分别属于VLAN 100、200，都连接着终端PC，当终端PC发出的DHCP报文（Discovery、Request）到达SW1、SW2之后，SW1、SW2转发给DHCP Server时会添加上DHCP Option 82，这里Agent Remote ID使用sysname填充，Agent Circuit ID使用接口编号以及接口VLAN ID填充，当PC1、PC2、PC3、PC4的DHCP报文到达DHCP Server时，每个报文的DHCP Option 82填充内容都是不同的。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200412231722.png" alt="P3" loading="lazy"></figure>
+<p>每个交换机的每个接口收到的DHCP报文都会被独一无二的标识，这就让DHCP Server能够实现针对每个接口都指定固定的IP地址，听起来这个需求很变态，但是实际上确实有人这么做了。</p>
+<p>关于DHCP Option 82更详细的内容可以查看RFC 3046。</p>
+<h4 id="问题描述">问题描述</h4>
+<p>这个问题的客户就是如此变态的让每个接入交换机都作为DHCP Relay，为来自客户端的DHCP报文打上DHCP Option 82，使用一台Linux服务器作为DHCP Server，在DHCP Server上为每一个接入交换机下的每个端口分配一个固定的IP地址。</p>
+<p>问题出现在客户替换了接入交换机的型号之后，从老型号升级为新型号之后终端却获取不到地址了。</p>
+<h4 id="问题分析">问题分析</h4>
+<p>老型号升级成新型号之后，最大的怀疑方向就是新、老型号对于DHCP Option 82的内容填充是不是存在不一致，前面虽然没有仔细说明，但是大家可以注意到我说的使用sysname、接口VLAN ID+接口编号填充都是“一般”，并且具体如何填充，占用几个字节这些涉及到报文格式细节的并没有提及。</p>
+<p>不过当时并没有想那么多，因为客户把作为DHCP Server服务器（一台Centos服务器）的相应配置发送过来了，这个配置很有趣：</p>
+<pre><code class="language-shell">class &quot;port1&quot; {
+match if ( (substring (option agent.remote-id,0,20)=&quot;xinzhenglou-1f&quot;)
+and (binary-to-ascii(10,16,&quot;&quot;,substring(option agent.circuit-id,2,2))=&quot;0&quot;) );
+}
+
+pool {
+option routers 10.32.2.254;
+option subnet-mask 255.255.255.0;
+option domain-name-servers 10.32.1.11;
+allow members of &quot;port1&quot;;
+range 10.32.2.21
+ 10.32.2.21; 
+ }
+</code></pre>
+<p>这里摘录了配置中的一点内容，从配置中我们大概可以看出这个配置文件工作的思路：</p>
+<ol>
+<li>使用class ''xx''匹配DHCP Option的内容，</li>
+<li>然后class ''xx''和一个pool绑定，这个pool中的IP地址只有一个，这样就实现了特定的交换机特定的接口获取到特定、不变的IP地址。</li>
+</ol>
+<h5 id="服务器读取报文值方式">服务器读取报文值方式</h5>
+<p>更有趣的部分是服务器的配置文件如何实现读取Agent Remote ID、Agent Circuit ID内的具体值，首先看下class的配置：</p>
+<pre><code class="language-shell">(option agent.remote-id,0,20)
+(option agent.circuit-id,2,2)
+</code></pre>
+<p>这两个配置就是读取值的关键，可以看到在<code>agent.remote-id</code>、<code>agent.circuit-id</code>的后边分别跟着<code>0,20</code>以及<code>2,2</code>这两个数字，用下图做解释（我曾经尝试用文字解释，发给客户，客户表示没看懂.....）。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200412231750.png" alt="P4" loading="lazy"></figure>
+<p><code>agent.remote-id，0，20</code>的含义如上图所示，DHCP报文中Agent Remote-id的value部分第0个字节开始往后的20字节都为解析范围之内，示例中value部分只有14个字节，所以整个value部分都被解析，16进制内容为：</p>
+<pre><code class="language-shell">78 69 6e 7a 68 65 6e 67 6c 6f 75 2d 31 66 
+</code></pre>
+<p>转换成<code>ascii</code>格式之后内容为<code>xinzhenglou-1f</code>。</p>
+<p>那么<code>agent.circuit-id,2,2</code>所表示的内容也不言而喻：DHCP报文中Agent circuit-id的value部分第2个字节开始往后的2个字节为解析范围之内。<br>
+<img src="http://www.behemoth.icu/img/20200412231812.png" alt="P5" loading="lazy"><br>
+如上图所示，2,2解析的值为：</p>
+<pre><code class="language-shell">0000
+</code></pre>
+<p>转换成<code>ascii</code>格式之后内容为0。</p>
+<p>上面是真实报文例子，从中我们可以看出DHCP服务器如何解析DHCP Option 82中的sub option，当然这是使用老型号交换机时的DHCP Option 82报文。</p>
+<h5 id="交换机dhcp-option-82报文格式">交换机DHCP Option 82报文格式</h5>
+<p>既然已经知道服务器读取数值的原理以及怀疑是新老型号交换机报文不一致导致，那下面就是查询手册获取报文格式。</p>
+<p>查阅老型号交换机手册，得知其DHCP Option 82的报文格式如下：</p>
+<ol>
+<li>
+<p>sub option 1</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200412231835.png" alt="P6" loading="lazy"></figure>
+</li>
+<li>
+<p>sub option 2</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200412231852.png" alt="P7" loading="lazy"></figure>
+</li>
+</ol>
+<p>当然这个报文格式其实在解释取值时已经大概能看出来，唯一不知道的其实只有sub option 1中value的前2个字节表示什么含义。</p>
+<p>在客户的配置下新交换机DHCP Option 82的报文格式如下：</p>
+<ol>
+<li>
+<p>sub option 1</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200412231913.png" alt="P8" loading="lazy"></figure>
+</li>
+<li>
+<p>sub option 2</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200412231926.png" alt="P9" loading="lazy"></figure>
+</li>
+</ol>
+<p>查看了一下客户在新交换机上镜像抓取的报文，DHCP Option 82里填充的内容和报文格式里完全一致。</p>
+<h5 id="使用旧的配置读取新的报文">使用旧的配置读取新的报文</h5>
+<p>客户并没有修改DHCP服务器上的配置，那使用旧的配置读取新的报文会得到什么结果呢？</p>
+<p>由于sub option 2（Agent Remote-id）的报文格式没有改变，所以不受影响，我们只看sub option 1，以一个真实的报文为例：</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200412231935.png" alt="P10" loading="lazy"></figure>
+<p>Agent Circuit-id的value部分值（16进制）为：</p>
+<pre><code class="language-shell">00 04 0b b8 01 17
+</code></pre>
+<p>使用<code>2,2</code>对value部分进行取值解析</p>
+<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200412231954.png" alt="P11" loading="lazy"></figure>
+<p>读取的结果为 <code>0b b8</code>，转换为10进制：<code>3000</code>。</p>
+<p>根据前面的报文格式我们知道这 2 byte代表的值是<code>VLAN ID</code>，很不巧的是客户的<code>VLAN ID</code>值都很大，基本都在1000以上。</p>
+<p>没有哪个接口编号的值会是1000以上，所以自然解析之后的值无法匹配到DHCP配置文件中的任何一个class，自然也没有对应的pool去分配地址，DHCP客户端获取不到地址也是可以预测的结果。</p>
+<p>而实际上接口编号应该是<code>0x17</code>（23号端口），value部分第5个字节开始1个字节的内容为接口编号。</p>
+<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200412232011.png" alt="P12" loading="lazy"></figure>
+<h4 id="有趣的地方">有趣的地方</h4>
+<p>在发现这个原因之后，把分析结果告诉了客户，告知客户配置文件中</p>
+<pre><code class="language-shell">(binary-to-ascii(10,16,&quot;&quot;,substring(option agent.circuit-id,2,2))=&quot;0&quot;)
+</code></pre>
+<p><code>2,2</code>不能继续这么用了，要修改为<code>5,1</code>，客户很高兴地去修改了。</p>
+<p>没过多久，客户又来了，说：不行啊，改了还是获取不到地址啊!</p>
+<p>我心想那不对劲啊，我的技术分析肯定没错，肯定有细节不对的。</p>
+<p>于是我用个人PC上VM workstation里的Centos当DHCP服务器按照客户的配置文件搭建了一个环境测试，结果发现还真是获取不到地址，这时回过头看配置文件，发现配置文件还有一个没注意到的地方，在<code>substring(option agent.circuit-id,2,2)</code>前还有两个数字：</p>
+<pre><code class="language-shell">10,16
+</code></pre>
+<p>查了下这两个数字的含义：</p>
+<ul>
+<li>10代表10进制</li>
+<li>16代表16个bit</li>
+</ul>
+<p>16个bit....，现在新的报文格式里Agent circuit-id只有1个字节了，也就是8个bit。</p>
+<p>果真修改完这里的配置之后，DHCP地址可以正常获取。</p>
+<p>当时我心里的想法：</p>
+<p>这个配置难道不是客户自己配的吗？</p>
+<p>貌似他完全不知道前面的10,16什么含义，不然怎么会我告诉他报文格式变了需要改后边，他并没有意识到前面也要修改呢？？？？</p>
+<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200412232020.png" alt="P13" loading="lazy"></figure>
+<p>有趣真的有趣，很多时候客户总是会让我不经意间震惊一下......</p>
+<h3 id="第二个问题">第二个问题</h3>
+<p>第二个问题还是和DHCP Relay相关，并且也是客户换设备（新老设备都为我司）之后客户端就获取不到地址了，只不过这次换的不是DHCP Relay设备而是DHCP服务器。</p>
+<p>并且这个问题并没有过多涉及报文，只是拓扑有点奇葩。</p>
+<h4 id="问题描述-2">问题描述</h4>
+<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200412232035.png" alt="P14" loading="lazy"></figure>
+<p>客户拓扑介绍：</p>
+<ol>
+<li>路由器作为DHCP服务器，AP、AC分别连接在路由器的GE0/0/1、GE0/0/2接口，不过这两个接口不是三层接口，都是二层接口，为Trunk模式，PVID都为100。</li>
+<li>AC的IP地址为192.168.2.254，手动配置还是自动获取不知道，AC、AP都为C记，没登录上去看。AC与AP通信、AC与路由器通信使用的只有这一个地址：2.254。</li>
+<li>AP地址为DHCP获取，Router上的interface-vlan 100 内的接口地址192.168.2.1作为网关。</li>
+<li>AP下终端的报文采用的是集中转发，终端的DHCP报文由AP通过<code>CAPWAP</code>数据隧道发送到AC，AC解封装之后作为DHCP Relay设备将DHCP报文发送给Router上的192.168.2.1。</li>
+</ol>
+<p>下面用图例展示下地址获取的过程，在这个过程中你会发现有个细节很有趣。</p>
+<ol>
+<li>
+<p>终端的DHCP的Discovery到达AP</p>
+<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200412232054.png" alt="P15" loading="lazy"></figure>
+</li>
+<li>
+<p>AP将报文加上CAPWAP头部，加上IP头部发送给AC,这个报文经由Router二层转发到达AC。IP头部的源目IP为192.168.2.25，目的IP为192.168.254</p>
+<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200412232115.png" alt="P16" loading="lazy"></figure>
+</li>
+<li>
+<p>AC收到之后拆掉CAPWAP隧道封装，将DHCP Discovery转发给Router，中继后的DHCP报文的源IP为192.168.2.254，目的IP为192.168.2.1。</p>
+<figure data-type="image" tabindex="16"><img src="http://www.behemoth.icu/img/20200412232131.png" alt="P17" loading="lazy"></figure>
+<p>至此DHCP Discovery报文就发到了Router了，正常来说就是Router作为DHCP Server回应DHCP Request了。</p>
+<p>但是既然是问题，那肯定是不正常了，换上新的路由器之后路由器收到DHCP Discovery根本不回应任何报文，而我在处理这个问题的时候，发现DHCP Discovery报文就挺奇怪的。</p>
+<p>奇怪在哪呢？详细得看DHCP Discovery报文中的字段就发现了。</p>
+<h4 id="relay-agent-ip-address">Relay Agent IP Address</h4>
+<p>把地址获取过程中1、3部的报文展开，DHCP报文中会有一个Relay Agent IP Address的字段值改变了。</p>
+<figure data-type="image" tabindex="17"><img src="http://www.behemoth.icu/img/20200412232242.png" alt="P18" loading="lazy"></figure>
+<p>Relay Agent IP Address标识了中继设备的IP地址(Relay agent IP address, used in booting via a<br>
+relay agent.)，比较常见的场景：</p>
+<figure data-type="image" tabindex="18"><img src="http://www.behemoth.icu/img/20200412232258.png" alt="P19" loading="lazy"></figure>
+<p>DHCP Relay设备发往DHCP Server的DHCP报文，其中的Relay agent IP address值应该为接受到PC发送的DHCP报文的接口IP地址，这样当DHCP Server收到DHCP Discovery之后可以根据其中的Relay agent IP address在本地的地址池中选择与Relay agent IP address相同网段的地址池进行地址分配。</p>
+<h4 id="有趣的地方-2">有趣的地方</h4>
+<p>现在回过去看下AC发往Router的DHCP  Discovery是不是就有点奇怪了，其中的Relay agent IP address和AC的IP地址、Router interface-vlan 100的接口IP地址都在同网段，同一个网段了还Relay啥啊，报文直接二层转发过去不就行了吗。</p>
+<p>当然直接二层转过去是我按照对我司AC的理解下的结论，C记不了解，但是这个转发确实很奇怪，对于Router而言看到Relay agent IP address和接受到该报文的接口IP地址在同一个网段，没见过，没见过，6的一批，6的一批。</p>
+<p>然后就不回复了。</p>
+<p>之后我去咨询研发，研发表示老型号实现不规范，这种场景不应该回复中继过来的DHCP Discovery，新的型号实现比较规划，我的内心OS：</p>
+<figure data-type="image" tabindex="19"><img src="http://www.behemoth.icu/img/20200412232306.png" alt="P20" loading="lazy"></figure>
+<p>当时听我另外一个同事说，另外一个平台的路由器这种场景下会正常回复DHCP Discovery的。</p>
+<figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412232315.png" alt="P21" loading="lazy"></figure>
+</li>
+</ol>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98">第一个问题</a>
+<ul>
+<li><a href="#dhcp-option-82">DHCP Option 82</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0">问题描述</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90">问题分析</a>
+<ul>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%AF%BB%E5%8F%96%E6%8A%A5%E6%96%87%E5%80%BC%E6%96%B9%E5%BC%8F">服务器读取报文值方式</a></li>
+<li><a href="#%E4%BA%A4%E6%8D%A2%E6%9C%BAdhcp-option-82%E6%8A%A5%E6%96%87%E6%A0%BC%E5%BC%8F">交换机DHCP Option 82报文格式</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E6%97%A7%E7%9A%84%E9%85%8D%E7%BD%AE%E8%AF%BB%E5%8F%96%E6%96%B0%E7%9A%84%E6%8A%A5%E6%96%87">使用旧的配置读取新的报文</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9C%89%E8%B6%A3%E7%9A%84%E5%9C%B0%E6%96%B9">有趣的地方</a></li>
+</ul>
+</li>
+<li><a href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E9%97%AE%E9%A2%98">第二个问题</a>
+<ul>
+<li><a href="#%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0-2">问题描述</a></li>
+<li><a href="#relay-agent-ip-address">Relay Agent IP Address</a></li>
+<li><a href="#%E6%9C%89%E8%B6%A3%E7%9A%84%E5%9C%B0%E6%96%B9-2">有趣的地方</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/guan-yu-kuang-shi-she-bei-de-yi-xie-xiao-zhi-shi/">
+              <h3 class="post-title">
+                关于框式设备的一些小知识
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

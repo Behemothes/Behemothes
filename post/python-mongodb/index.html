@@ -1,0 +1,307 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>python mongoDB | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="python mongoDB | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="连接数据库
+mongodb_client = pymongo.MongoClient(host = 'localhost',port = 27017)
+
+除了此方法之外还可以通过mongoDB的标准字符串连接方式连接
+MongoClient..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              python mongoDB
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h4 id="连接数据库">连接数据库</h4>
+<pre><code class="language-python">mongodb_client = pymongo.MongoClient(host = 'localhost',port = 27017)
+</code></pre>
+<p>除了此方法之外还可以通过mongoDB的标准字符串连接方式连接</p>
+<pre><code class="language-python">MongoClient('mongodb://[username:password@]host1[:port1]')
+</code></pre>
+<h4 id="指定数据库">指定数据库</h4>
+<pre><code class="language-python">mongo_db = mongodb_client.python
+</code></pre>
+<h4 id="指定collection">指定collection</h4>
+<pre><code class="language-python">mongo_colleciton = mongo_db.spider_taobao
+</code></pre>
+<ol>
+<li></li>
+</ol>
+<p>对document的操作基本和<code>mongoDB</code>语法没多大区别，但还是有一些不一样的地方，看下mongoDB源码基本就能大概了解。</p>
+<h4 id="document的操作">document的操作</h4>
+<h5 id="查找数据">查找数据</h5>
+<ul>
+<li>显示所有数据,通过查询方法find()实现，返回结果是一个生成器，需要通过<code>for</code>读取。</li>
+</ul>
+<pre><code class="language-python">import mongoDB
+def find_all():
+    find_res = mongo_colleciton.find({})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+<ul>
+<li>
+<p>使用find()查找数据</p>
+<p>查询特定的数据，普通查询方式,这里注意，有和直接mongoDB语法不一样的地方，条件操作符需要加上'':</p>
+<pre><code class="language-python">def find_exact():
+    find_res = mongo_colleciton.find({'1':{'$gte':15,'$lte':21}})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+</li>
+<li>
+<p>find_one()</p>
+<p>用find查询返回的结果是一个生成器，如果使用find_one()、find_many()进行查询，返回的直接就是结果</p>
+<pre><code class="language-python">def find_one(key,value):
+    find_res = mongo_colleciton.find_one({key:value})
+    print(find_res)
+    
+find_one('k1','v1')
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">{'_id': ObjectId('5db3f632cae991fc6731cd0a'), 'k1': 'v1'}
+</code></pre>
+<p>可以看到查询结果可以直接用print(）打印出来</p>
+</li>
+<li>
+<p>通过‘_id’查询数据</p>
+<p>引入BSON构建<code>ObjectID</code>进行查询。</p>
+<pre><code class="language-python">def find_by_id():
+      from bson.objectid import ObjectId
+      res = mongo_colleciton.find_one({'_id':ObjectId('5db3fc8fdf97b1835f085bbd')})
+      print(res)
+
+  find_by_id()
+
+执行结果：
+{'_id': ObjectId('5db3fc8fdf97b1835f085bbd'), '1': 1}
+</code></pre>
+</li>
+</ul>
+<h5 id="删除数据">删除数据</h5>
+<p>remove的语法一致，deleteOne和deleteMany变成delete_one、delete_many。</p>
+<pre><code class="language-python">def remove():
+    mongo_colleciton.insert({'k1':'v1'})
+    mongo_colleciton.insert({'k2':'v2'})
+    mongo_colleciton.remove({'k1':'v1'})
+    mongo_colleciton.delete_one({'k2':'v2'})
+    print(mongo_colleciton.find({'k1':'v1'}))
+</code></pre>
+<h5 id="更新数据">更新数据</h5>
+<p>同样地$set限定符也需要加上‘’，推荐使用update_one、update_many，而不是update</p>
+<pre><code class="language-python">def update_():
+    mongo_colleciton.update_one({'age':22},{'$set':{'age':23}})
+    find_res = mongo_colleciton.find({'name':'Jordan'})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+<h5 id="插入数据">插入数据</h5>
+<p>推荐使用insert_one()、insert_many()。</p>
+<h6 id="插入一个数据">插入一个数据</h6>
+<pre><code class="language-python">def insert_one(key,value):
+    insert_res = mongo_colleciton.insert_one({key:value})
+</code></pre>
+<h6 id="插入多个数据">插入多个数据</h6>
+<p>insert_many() return的值当中有一个inserted_ids，是一个list，源码部分查看    inserted_ids.append(document[&quot;_id&quot;])。</p>
+<p>其中insert_many()插入的值为iterable。</p>
+<pre><code class="language-python">def insert_many():
+    #使用列表生成器，生成一个list，其中每一项数据都必须符合{}的形式
+    print(mongo_colleciton.count_documents({}))
+    mongo_colleciton.insert_many([{'k'+str(i):'v'+str(j)} for i in range(2,4) for j in range(2,4)])
+    print(mongo_colleciton.count_documents({}))
+    res = mongo_colleciton.insert_many([{'1':1},{'2':2}])
+    print(res.inserted_ids)
+    
+insert_many()
+</code></pre>
+<p>执行结果：<br>
+执行结果，通过count_documents({})函数可以看出来一共插入了4个值。<br>
+同时，inserted_dis可以正常显示出已经插入的值id。</p>
+<pre><code class="language-python">[ObjectId('5db3fc8fdf97b1835f085bbd'),ObjectId('5db3fc8fdf97b1835f085bbe')]
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93">连接数据库</a></li>
+<li><a href="#%E6%8C%87%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%BA%93">指定数据库</a></li>
+<li><a href="#%E6%8C%87%E5%AE%9Acollection">指定collection</a></li>
+<li><a href="#document%E7%9A%84%E6%93%8D%E4%BD%9C">document的操作</a>
+<ul>
+<li><a href="#%E6%9F%A5%E6%89%BE%E6%95%B0%E6%8D%AE">查找数据</a></li>
+<li><a href="#%E5%88%A0%E9%99%A4%E6%95%B0%E6%8D%AE">删除数据</a></li>
+<li><a href="#%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE">更新数据</a></li>
+<li><a href="#%E6%8F%92%E5%85%A5%E6%95%B0%E6%8D%AE">插入数据</a>
+<ul>
+<li><a href="#%E6%8F%92%E5%85%A5%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE">插入一个数据</a></li>
+<li><a href="#%E6%8F%92%E5%85%A5%E5%A4%9A%E4%B8%AA%E6%95%B0%E6%8D%AE">插入多个数据</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/mongodb/">
+              <h3 class="post-title">
+                mongoDB
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

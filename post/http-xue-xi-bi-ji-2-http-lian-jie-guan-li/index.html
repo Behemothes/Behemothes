@@ -1,0 +1,285 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HTTP学习笔记 （2） HTTP连接管理 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="HTTP学习笔记 （2） HTTP连接管理 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="http连接管理
+tcp对http的性能影响
+http传输依赖tcp，因此tcp的传输性能对http的影响就不容忽视，体现以下几个方面：
+
+Tcp传输延迟：一个完整的http访问从dns解析开始、tcp三次握手、http请求…，在当前的网络..." />
+    <meta name="keywords" content="学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              HTTP学习笔记 （2） HTTP连接管理
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="http连接管理">http连接管理</h3>
+<h4 id="tcp对http的性能影响">tcp对http的性能影响</h4>
+<p>http传输依赖tcp，因此tcp的传输性能对http的影响就不容忽视，体现以下几个方面：</p>
+<ol>
+<li>Tcp传输延迟：一个完整的http访问从dns解析开始、tcp三次握手、http请求…，在当前的网络环境中tcp三次握手延迟很小，dns解析受dns性能影响反而是有可能导致延迟很大的环节。</li>
+<li>延迟确认:tcp ack确认机制，很少会有单独的ack报文，都是携带在传输内容时顺便ack对方的传输报文，所以会存在一个等待传输ack的时间，对端没收到ack的情况下后续报文不会传输（但实际现在也有块确认，不会必须等待ack到了才发下一个报文，所以这个实际中也不会产生很大的延迟）。</li>
+<li>Tcp慢启动：tcp的拥塞避免机制，传输速率不会立马最大。</li>
+<li>Time-wait：一个tcp在没有内容传输之后（连接关闭）这个tcp连接的五元组不会立马就可以复用，而是存在一个time-wait时间，在此之后相同的连接才能够建立（五元组相同），正常业务访问这个问题不会存在影响，但是如果是性能测试只有一个客户端源地址，server的time-wait是200s，客户端可用源端口未（1024-65535），每秒能建立的连接数60000/200=300，每秒只能建立300个。</li>
+</ol>
+<h4 id="connection首部">Connection首部</h4>
+<p>Connection首部的值可能为以下三种情况：</p>
+<ol>
+<li>该报文中存在的其他header名称:代表这个header要被接受者（proxy、cache）删掉之后再转发出去。</li>
+<li>Close、keep-alive：发送完下一个报文之后改连接需要被关闭、该连接为持久连接需要传输多个事务</li>
+<li>任意连接值：此连接的非标准选项。<br>
+在客户端与server之间可能并不是直接通信，中间可能存在proxy、cache，connection选项就可以指定一些header只会在client与proxy、cache之间传递（或者server与proxy、cache），同时connection header本身也需要在中间设备删除。</li>
+</ol>
+<h4 id="串行处理延迟">串行处理延迟</h4>
+<p>一个存在三张图片的页面如果需要使用串行处理进行传输需要4次连接，进行4次传输（页面本身也是一个content），那么延迟就是4*delay，同时如果是图片先加载，页面文件最后加载，那结果就是在页面文件未加载时整个页面看起来是什么都没有，对于http性能来说，这点很显然不太合理。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200413222944.png" alt="P6" loading="lazy"></figure>
+<h4 id="并行连接">并行连接</h4>
+<p>同时建立多个tcp连接，一个tcp连接进行一个http事物传输页面上的一个对象，但是也有一些“缺点”：</p>
+<ol>
+<li>对服务器的连接数消耗较多，一个页面上百个对象很正常，如果每个都使用单独的tcp连接会极大加重服务器的负载，因此需要限制每个客户端的连接数。</li>
+<li>如果在网络连接速度不佳的情况下，多个连接都在并行加载，但结果是都加载缓慢，导致页面整体加载速度还是没有提升。</li>
+</ol>
+<h4 id="持久连接">持久连接</h4>
+<p>http早期版本一个http事务打开一个tcp连接，事务结束之后连接关闭，下一个事务重新打开新的tcp连接，频繁重新建立连接浪费性能（每次都存在tcp连接建立的延迟、tcp慢启动带来的延迟）。<br>
+因此在http1.1以及http1.0增强版中容许一个事务结束后tcp连接不关闭（持久连接），相比较并行连接，持久连接的优点：</p>
+<ol>
+<li>同样可以减少tcp连接、tcp慢启动带来的延迟。</li>
+<li>不会在短时间内建立大量tcp连接。<br>
+但是持久连接也需要注意及时关闭连接（connection：close），不然会导致很多的空闲连接存在。</li>
+</ol>
+<p>持久连接的类型：</p>
+<ol>
+<li>http 1.0+ keepalive</li>
+<li>http 1.1 persistent</li>
+</ol>
+<h5 id="keepalive">keepalive</h5>
+<p>当前的http 1.1协议规范中已经没有对keepalive的描述，但是仍然在大量使用，比如下面的例子：</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200413222958.png" alt="P7" loading="lazy"></figure>
+<p>可以看到request中的http version为1.1,但是仍然使用的为connection：keep-alive。当客户端希望这个连接为持久连接时，在request中携带connection header，携带内容为keepalive，如果服务器支持会在回应的response中同样携带这个header，否则客户端就会认为服务器不支持，并在事务结束之后关闭连接。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200413223011.png" alt="p8" loading="lazy"></figure>
+<p>Keepalive行为控制：<br>
+Keepalive的持久连接可以随时关闭（空闲状态），并且可以限制keep-alive的持久连接所能处理的事务数量，当存在connection：keep-alive header之后还可以通过keep-alive header来对持久连接进行参数调节：</p>
+<ol>
+<li>timeout：response中携带，服务器预估的该持久连接还可以保持活跃的时间（只是预估，不是实际数值）。</li>
+<li>max：还持久连接还可以在多少个http事务传输中使用（预估）。</li>
+</ol>
+<h5 id="keep-alive和哑代理">Keep-alive和哑代理</h5>
+<p>Keep-alive的概念中很重要的一点：在一条tcp连接上传输多个事务，而中间存在proxy设备时tcp连接的两端就不在是客户端与服务器，而是&lt;客户端-tcp连接-proxy&gt;，&lt;proxy-tcp连接-服务器&gt;，前面也提到如果存在proxy设备，则connection header里涉及到的头部以及connection header本身都需要被删除之后再转发，如果不呢？</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200413223021.png" alt="P9" loading="lazy"></figure>
+<p>上图解释了如果proxy设备不删除connection header会发生什么情况：</p>
+<ol>
+<li>客户端发送的request中携带connection：keep-alive，proxy设备比较老旧、不支持connection：keep-alive头部的处理，收到之后直接转发给服务器。</li>
+<li>服务器收到之后认为通信的对端需要保持一个持久连接，response中携带connection：keep-alive。</li>
+<li>Proxy设备依旧不删除connection：keep-alive，发送给客户端。</li>
+<li>客户端和服务器都认为对端支持持久连接，后续的事务传输都在第一条tcp连接上进行，但是proxy不支持，依旧认为一个tcp连接只传输一个事务。</li>
+<li>后续客户端和服务器相互传输的事务通过之前的tcp连接发送到proxy，但是proxy此时不再会对这个tcp连接进行转发处理，因为它会认为这是一个之前传输事务用的tcp连接应该已经finish掉。</li>
+</ol>
+<p>除了connection、keep-alive header不能被proxy转发之外，以下相关的header也同样不能被proxy转发：proxy-authentication、proxy-connection、transfer-encoding、upgrade。</p>
+<h5 id="proxy-connection">Proxy-connection</h5>
+<p>Netscape（早就凉了）的浏览器为了解决上面的哑代理问题设计了proxy-connection header，浏览器发出的request中携带proxy-connection，如果是哑代理转发到server，server会忽略这个头部。<br>
+如果proxy能够支持这个字段，proxy会删除这个header，并且向server“转发”的http报文中会插入connection：keep-alive，这样就可以实现通过proxy设备依旧可以存在持久连接。<br>
+但是对于多级代理并且多级代理中存在哑代理的情况，proxy-connection依旧无法解决问题，如下图：</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200413223032.png" alt="P10" loading="lazy"></figure>
+<p>在上图的情况中第一个proxy01能够识别proxy-connection，将其删除变成connection继续转发，但是下一跳是一台无法识别connection参数的proxy02，还是会出现和之前一样的问题，proxy01和服务器之间的持久连接传输事务在proxy02上会被丢弃。</p>
+<h5 id="persistent-connection">Persistent connection</h5>
+<p>机制基本和http 1.0中的keep-alive一致，区别在于http 1.1中不需要显示表达就默认认为是开启持久连接，除非使用connection：close关闭掉（但是服务器可以直接关闭掉，不发close不代表服务器会一直把这个连接保持着）。</p>
+<h4 id="管道化连接">管道化连接</h4>
+<p>类似tcp的批量确认，无需等待一个ack才传输下一个内容，在持久连接的基础上可以选择管道化连接，在一个持久连接上批量发送多个请求，之后等待回应，无需发送一个请求等待回应再开始下一个请求。</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200413223043.png" alt="P11" loading="lazy"></figure>
+<h4 id="连接关闭">连接关闭</h4>
+<h5 id="任意时间关闭">任意时间关闭</h5>
+<p>http的服务器、客户端、proxy都可以在任意时刻关闭tcp连接，服务器在一个连接空闲一段时间之后可能决定关闭该连接，但是此时客户端会不会有数据发送—不得而知，如果这时候客户端发送数据将会因为服务器连接关闭提示连接超时。</p>
+<h5 id="幂等事务连接">幂等事务连接</h5>
+<p>执行多次结果相同的事务被称作幂等事务，这些事务受连接“意外关闭”的影响比较小，但是一些操作受影响比较大，这些事务不应该使用管道化方式传输（如post），否则连接的意外中断就会导致一些业务数据的异常。</p>
+<h5 id="正常关闭连接">正常关闭连接</h5>
+<p>Tcp连接双向：分为输入、输出两个方向。</p>
+<ol>
+<li>完全关闭与半关闭<br>
+输入、输出都关闭被称为完全关闭。<br>
+关闭输入、输出其中的一个方向被称为半关闭。</li>
+</ol>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#http%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86">http连接管理</a>
+<ul>
+<li><a href="#tcp%E5%AF%B9http%E7%9A%84%E6%80%A7%E8%83%BD%E5%BD%B1%E5%93%8D">tcp对http的性能影响</a></li>
+<li><a href="#connection%E9%A6%96%E9%83%A8">Connection首部</a></li>
+<li><a href="#%E4%B8%B2%E8%A1%8C%E5%A4%84%E7%90%86%E5%BB%B6%E8%BF%9F">串行处理延迟</a></li>
+<li><a href="#%E5%B9%B6%E8%A1%8C%E8%BF%9E%E6%8E%A5">并行连接</a></li>
+<li><a href="#%E6%8C%81%E4%B9%85%E8%BF%9E%E6%8E%A5">持久连接</a>
+<ul>
+<li><a href="#keepalive">keepalive</a></li>
+<li><a href="#keep-alive%E5%92%8C%E5%93%91%E4%BB%A3%E7%90%86">Keep-alive和哑代理</a></li>
+<li><a href="#proxy-connection">Proxy-connection</a></li>
+<li><a href="#persistent-connection">Persistent connection</a></li>
+</ul>
+</li>
+<li><a href="#%E7%AE%A1%E9%81%93%E5%8C%96%E8%BF%9E%E6%8E%A5">管道化连接</a></li>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E5%85%B3%E9%97%AD">连接关闭</a>
+<ul>
+<li><a href="#%E4%BB%BB%E6%84%8F%E6%97%B6%E9%97%B4%E5%85%B3%E9%97%AD">任意时间关闭</a></li>
+<li><a href="#%E5%B9%82%E7%AD%89%E4%BA%8B%E5%8A%A1%E8%BF%9E%E6%8E%A5">幂等事务连接</a></li>
+<li><a href="#%E6%AD%A3%E5%B8%B8%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5">正常关闭连接</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/http-xue-xi-bi-ji-1bao-wen-tou-bu/">
+              <h3 class="post-title">
+                HTTP学习笔记 （1）报文头部
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

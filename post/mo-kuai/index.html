@@ -1,0 +1,439 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>模块 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="模块 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="将不同的功能(函数、function)放到不同的文件中，方便后期维护，让程序结构更加清晰。
+模块的分类
+
+内置模块，标准模块,可以在交互式中python如下方式查看：
+
+&gt;&gt;&gt; help('modules')
+
+Pleas..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              模块
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>将不同的功能(函数、function)放到不同的文件中，方便后期维护，让程序结构更加清晰。</p>
+<h3 id="模块的分类">模块的分类</h3>
+<ul>
+<li>内置模块，标准模块,可以在交互式中<code>python</code>如下方式查看：</li>
+</ul>
+<pre><code class="language-python">&gt;&gt;&gt; help('modules')
+
+Please wait a moment while I gather a list of all available modules...
+
+__future__          _tracemalloc        glob                secrets
+_abc                _warnings           gzip                select
+_ast                _weakref            hashlib             selectors
+_asyncio            _weakrefset         heapq               selenium
+_bisect             _winapi             hmac                setuptools
+_blake2             abc                 html                shelve
+_bootlocale         aifc                http                shlex
+_bz2                antigravity         idlelib             shutil
+_codecs             argparse            imaplib             signal
+_codecs_cn          array               imghdr              site
+_codecs_hk          ast                 imp                 smtpd
+_codecs_iso2022     asynchat            importlib           smtplib
+_codecs_jp          asyncio             inspect             sndhdr
+</code></pre>
+<ul>
+<li>第三方开源模块，在<code>python</code>的官方站点 <a href="https://pypi.org/">python官网模块站点</a>注册，可以通过<code>pip install</code>安装。不过一般<br>
+使用官网站点pip install速度会比较慢，站点在国外，大家都懂得，所以可以将pip install的安装站点更换为国内镜像站点（豆瓣）。<br>
+<code>pip install -i http://pypi.douban.com/simple/ --trusted-host=pypi.douban.com/simple [module name]</code></li>
+<li>自定义模块<br>
+就是自己在本地写的。</li>
+</ul>
+<h3 id="模块导入">模块导入</h3>
+<p>经常能看到的模块导入有如下几种方式：</p>
+<ul>
+<li>import module<br>
+直接导入一个module，没什么好说的，前提导入该module的py文件在当前路径或者系统变量中的路径里能找到这个module name。</li>
+<li>from module import function or class  ``<br>
+导入module中的某个function、class，并不是导入整个module。例如在<code>module1.py</code>中定义了function <code>def func_1():</code>，那就可以这么写：</li>
+</ul>
+<pre><code class="language-python">from one.module1 import func_1
+</code></pre>
+<p>前面的<code>from one.module1</code>，路径时再详细展开。</p>
+<ul>
+<li>from x.x.x import *<br>
+和上面相反，这个就是导入全部的function。</li>
+</ul>
+<h3 id="模块的查找路径">模块的查找路径</h3>
+<p>从<code>sys.path</code>中的路径以此去查找该名称的模块，如果查找不到就不导入。</p>
+<pre><code class="language-python">import sys
+print(sys.path)
+</code></pre>
+<p>打印结果是一个<code>list</code>，可以对这个<code>list</code>进行<code>append</code>，这样在执行时可以<strong>临时</strong>地改变sys.path，让该文件的导入路径存在自己想<br>
+要的路径。</p>
+<p>一般来说，第三方安装的模块都在<code>site-packages</code>这个目录下。</p>
+<h3 id="跨路径导入模块">跨路径导入模块</h3>
+<p>常见问题，假设一个一下的目录结构。<br>
+total<br>
+|-one<br>
+|--module1.py<br>
+|-two<br>
+|--module2.py<br>
+main.py</p>
+<p>module1.py的内容：</p>
+<pre><code class="language-python">    def func_1():
+    print('this mudule 1')
+</code></pre>
+<p>module2.py的内容：</p>
+<pre><code class="language-python">    def func_2():
+    print('this mudule 2')
+</code></pre>
+<p>我们来看下几个场景。</p>
+<ul>
+<li>在<code>main.py</code>中导入<code>module1.py</code>以及<code>module2.py</code></li>
+</ul>
+<pre><code class="language-python">from one import module1
+from two import module2
+
+module1.func_1()
+module2.func_2()
+</code></pre>
+<p><code>main.py</code>的当今路径下存在文件夹<code>one</code> <code>two</code>，因此可以使用该方式导入，所以可以看出来导入时路径信息也是存在的。</p>
+<ul>
+<li>在<code>main.py</code>中导入<code>module1.py</code>，并且<code>module1.py</code>此时增加了内容，调用了<code>module2.py</code>中的函数。<br>
+分别看下三个文件的内容是如何写的：<br>
+main.py:</li>
+</ul>
+<pre><code class="language-python">from one import module1
+
+module1.func_1()
+</code></pre>
+<p>module1.py：</p>
+<pre><code class="language-python">from two import module2
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>module2.py:</p>
+<pre><code class="language-python">def func_2():
+    print('this mudule 2')
+</code></pre>
+<p>此时执行<code>main.py</code>结果如何？ 会报错吗？ 不会，能正常执行：</p>
+<pre><code class="language-python">this mudule 2
+this mudule 1
+</code></pre>
+<p>是不是比较奇怪，<code>module1.py</code>中直接<code>from two import module2</code>能正常导入<code>module2</code>? <code>module1.py</code>的<code>sys.path</code>里肯定找不到这个路径，<br>
+父一级目录才能找到才对？最开始我也是这么想的。</p>
+<p>这时候如果试着去直接执行<code>module1.py</code>就会发现，报错了。</p>
+<pre><code class="language-python">    from two import module2
+ModuleNotFoundError: No module named 'two'
+</code></pre>
+<p>所以这里大概可以看出来python的执行方式，在<code>main.py</code>中导入<code>module1.py</code>时，是在<code>main.py</code>的路径下去执行<code>from two import module2</code><br>
+,此时自然能够导入。但是如果直接执行<code>module2.py</code>,那肯定找不到的。</p>
+<p>由此引发第三个问题？<code>module2.py</code>中怎么导入<code>module1.py</code>。</p>
+<ul>
+<li><code>module2.py</code>中导入<code>module1.py</code><br>
+尝试这样：</li>
+</ul>
+<pre><code class="language-python">from ..two import module2  #从上一级目录找到two
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>理论上可行，如果<code>two</code>这个文件夹不是顶级目录的话。(这里每个路径我都加了__init__.py，变成了package)</p>
+<pre><code class="language-python">attempted relative import beyond top-level package
+</code></pre>
+<p>在python中，通过相对路径导入，只能到顶级目录，所以这种方式GG。所谓顶级目录，就是该文件所在的路径，所以相对路径方式可以用于<br>
+同目录、子目录方式。</p>
+<p>看下真正的做法，使用<code>os</code> <code>sys</code>模块。</p>
+<pre><code class="language-python">import os,sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+from two import module2
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>正常导入。</p>
+<ol>
+<li><code>os.path.abspath(__file__)</code>获取了当前py文件的绝对路径<code>/total/one/module1.py</code>。</li>
+<li>然后使用<code>os.path.dirname</code>获取父目录。</li>
+<li>这里使用了2次，也就是获取到<code>/total</code>,把这个路径临时加到<code>sys.path</code></li>
+<li><code>sys.path</code>改变后，此时再去<code>form two import module2</code>，可以正常查找到。</li>
+</ol>
+<p>模块内容至此结束，package的内容也涉及了很多。</p>
+<h2 id="包-package">包-package</h2>
+<p>一个文件内包含很多module，这就叫做package，区别是这个文件夹内必须存在一个<code>__int__.py</code>。</p>
+<h3 id="跨模块导入">跨模块导入</h3>
+<p>前面模块导入的第三种，但是其实这种实现方式并不是官方推荐方式，官方推荐方式是第二种方式，在顶级目录下写一个入口程序。</p>
+<h3 id="相对路径导入-绝对路径导入">相对路径导入、绝对路径导入</h3>
+<p><code>from . import action</code><br>
+从当前路径下导入，<code>..</code>代表上层目录，<code>...</code>代表上上层目录。</p>
+<p><strong>注意事项</strong></p>
+<ol>
+<li>必须是package的路径(存在__init__.py)</li>
+<li>不能作为顶层模块来执行该文件夹中的py文件（即不能作为主函数的入口）。导入模块不能到程序的入口，还是以前面例子为例，<code>module2.py</code>中<br>
+如果导入了一个<code>module</code>，这个<code>module</code>内相对导入了一个和<code>module2</code>同一个层级的<code>module</code>，此时就算到了程序入口这个level的路径，就会报错：<br>
+<code>ValueError: attempted relative import beyond top-level package</code></li>
+</ol>
+<h2 id="sys模块">sys模块</h2>
+<ul>
+<li>sys.argv<br>
+返回参数列表，以<code>list</code>形式，第一个参数是<code>.py</code>文件自身。<br>
+<code>['C:/Users/Chris/PycharmProjects/scapy/每周一个python标准库/module_learning/two/test.py']</code></li>
+<li>sys.version<br>
+获得python解释器的版本</li>
+<li>sys.path<br>
+python解释器的环境变量</li>
+<li>sys.platform<br>
+操作系统平台名称<br>
+<code>win32</code></li>
+<li>sys.getdefaultencoding()<br>
+获取系统默认的字符编码 - <code>utf-8</code></li>
+<li>sys.getfilesystemencoding()<br>
+获取系统将内存中数据存储到文件中时的字符编码  - <code>utf-8</code></li>
+</ul>
+<h2 id="os模块">os模块</h2>
+<ul>
+<li>os.getcwd()<br>
+当前工作目录</li>
+<li>os.listdir()<br>
+当前路径下所有文件、目录</li>
+<li>os.removedirs（r“c：\python”）<br>
+删除整个文件夹，支持递归路径</li>
+<li>os.path.isfile(<strong>file</strong>)<br>
+是否为文件，返回Boolean值</li>
+<li>os.path.isdir()<br>
+是否为文件夹，返回Boolean值</li>
+<li>os.path.isabs()<br>
+是否为绝对路径</li>
+</ul>
+<pre><code class="language-python">dir_abs = os.path.abspath(__file__)
+print(os.path.isabs(dir_abs))
+Ture 
+</code></pre>
+<ul>
+<li>os.path.split()<br>
+将abs路径分割成为文件名以及所在路径，<code>tuple</code>形式返回结果<br>
+<code>print(os.path.split(dir_abs))</code><br>
+<code>('C:\\Users\\Chris\\PycharmProjects\\scapy\\每周一个python标准库\\module_learning\\two', 'test.py')</code></li>
+<li>os.path.splitext()<br>
+获取扩展名,返回<code>tuple</code>，结果如下形式：</li>
+</ul>
+<pre><code class="language-python">('C:\\Users\\Chris\\PycharmProjects\\scapy\\每周一个python标准库\\module_learning\\two\\test', '.py')
+</code></pre>
+<ul>
+<li>os.path.dirname()<br>
+获取路径名字</li>
+</ul>
+<pre><code class="language-python">print(os.path.dirname(dir_abs))
+C:\Users\Chris\PycharmProjects\scapy\每周一个python标准库\module_learning\two
+</code></pre>
+<ul>
+<li>os.path.basename()<br>
+获取文件名</li>
+</ul>
+<pre><code class="language-python">print(os.path.basename(dir_abs))  
+test.py
+</code></pre>
+<ul>
+<li>os.system()<br>
+执行系统命令</li>
+</ul>
+<pre><code class="language-python">os.system('ping 192.168.123.1')
+</code></pre>
+<ul>
+<li>os.environ<br>
+返回操作系统变量</li>
+<li>os.name<br>
+获取操作系统名称，windows为<code>nt</code></li>
+<li>os.makedirs（r“c：\python\test”）<br>
+递归创建多级目录</li>
+<li>os.mkdir()<br>
+创建一级目录</li>
+<li>os.path.getsize()<br>
+获取文件大小</li>
+<li>os.path.join(dir,filename)<br>
+将文件和路径拼接在一起，有效解决不同操作系统路径分隔符不一致的问题</li>
+<li>os.chdir(dirname)<br>
+改变当前工作目录</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E6%A8%A1%E5%9D%97%E7%9A%84%E5%88%86%E7%B1%BB">模块的分类</a></li>
+<li><a href="#%E6%A8%A1%E5%9D%97%E5%AF%BC%E5%85%A5">模块导入</a></li>
+<li><a href="#%E6%A8%A1%E5%9D%97%E7%9A%84%E6%9F%A5%E6%89%BE%E8%B7%AF%E5%BE%84">模块的查找路径</a></li>
+<li><a href="#%E8%B7%A8%E8%B7%AF%E5%BE%84%E5%AF%BC%E5%85%A5%E6%A8%A1%E5%9D%97">跨路径导入模块</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8C%85-package">包-package</a>
+<ul>
+<li><a href="#%E8%B7%A8%E6%A8%A1%E5%9D%97%E5%AF%BC%E5%85%A5">跨模块导入</a></li>
+<li><a href="#%E7%9B%B8%E5%AF%B9%E8%B7%AF%E5%BE%84%E5%AF%BC%E5%85%A5-%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84%E5%AF%BC%E5%85%A5">相对路径导入、绝对路径导入</a></li>
+</ul>
+</li>
+<li><a href="#sys%E6%A8%A1%E5%9D%97">sys模块</a></li>
+<li><a href="#os%E6%A8%A1%E5%9D%97">os模块</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/logging-mo-kuai/">
+              <h3 class="post-title">
+                logging模块
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

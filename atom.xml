@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://behemothes.github.io/Behemothes/</id>
     <title>Gridea</title>
-    <updated>2020-03-16T15:04:05.778Z</updated>
+    <updated>2020-04-13T15:14:53.024Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://behemothes.github.io/Behemothes/"/>
     <link rel="self" href="https://behemothes.github.io/Behemothes/atom.xml"/>
@@ -11,355 +11,2112 @@
     <icon>https://behemothes.github.io/Behemothes/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
     <entry>
-        <title type="html"><![CDATA[让我一言难尽的NAT (1)]]></title>
-        <id>https://behemothes.github.io/Behemothes/post/rang-wo-yi-yan-nan-jin-de-nat-1/</id>
-        <link href="https://behemothes.github.io/Behemothes/post/rang-wo-yi-yan-nan-jin-de-nat-1/">
+        <title type="html"><![CDATA[ACG WEB认证成功跳转页面原理]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/acg-web-ren-zheng-cheng-gong-tiao-zhuan-ye-mian-yuan-li/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/acg-web-ren-zheng-cheng-gong-tiao-zhuan-ye-mian-yuan-li/">
         </link>
-        <updated>2020-03-16T09:04:15.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="写在开始之前">写在开始之前</h2>
-<h3 id="前言">前言</h3>
-<p>这个话题的大纲2019.12.22就写好了，但是最近才开始动笔，没办法-懒。</p>
-<p>为什么写NAT这个题材呢？</p>
-<p>原因很简单：很多人觉得NAT很简单，当然这些人里肯定也包括很多客户以及很多工程师。但实际因为NAT导致业务出现问题的时候，排查起来可能就没那么简单了。并且由于客户、工程师觉得NAT不是很简单的一个功能吗？那很多时候客户就会觉得：我之前用别的厂家设备配这个简简单单的NAT功能就没问题，为什么用你们厂家的设备部署个简单的NAT，就出问题了呢？</p>
-<p>作为解决问题的你第一想法：</p>
-<p>甩锅?</p>
-<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/%E7%94%A9%E9%94%85.png" alt="" loading="lazy"></figure>
-<p>那是甩不出去的。</p>
-<p>客户只要一句话：“之前好好的，用你们设备部署下NAT业务就出问题了，肯定是你们有啥问题啊。”，就能把你怼得死死的。</p>
-<p>所以还是收拾起幼稚的想法，老老实实排查问题吧。</p>
-<p>说到排查问题，那涉及到的事情可久多了：对比测试、抓包分析、了解业务流程，整个过程真的是让人头大，不是因为问题多大，而是这个对比、了解业务、让客户配合收集信息，有时候比解决问题本身的技术难度，真的，难多了。</p>
-<p>很多时候还涉及到运营商。</p>
-<p>涉及到运营商配合，那真的是更一言难尽.......</p>
-<p>很多运营商过来个也不太懂技术的人，自己电脑一插外网网线，没问题的，OK的，我们没问题的.....</p>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/2.png" alt="" loading="lazy"></figure>
-<p>可能有人会觉得，这应该是个概率很小的事吧，我当网工这么久，基本没遇见过什么NAT导致的问题啊？？？</p>
-<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/3.png" alt="" loading="lazy"></figure>
-<p>但是，很不幸。</p>
-<p>作为一名曾经的TAC的资深专家工程师（没错这个岗位叫专家工程师，哈哈！），我有时候经常搞得就是这些一般人遇不到的、奇葩的、难搞的问题，所以对我而言，这个概率真不低。尤其是企业网客户，现在哪个企业网里不部署NAT呢？（当然不绝对这句话，大客户表示我直接公网地址+BGP，NAT是个啥？）。</p>
-<h3 id="nat真的很简单吗">NAT真的很简单吗？</h3>
-<p>首先我们来想下NAT真的很简答吗？</p>
-<p>如果只是能通、能用的角度来看，NAT真的简单，H某C、H某这两家配置出方向的源地址转换最简单的场景下，接口下一条命令：</p>
-<pre><code class="language-shell">Nat outbound
-</code></pre>
-<p>就可以搞定。</p>
-<p>C记可能命令要多想一些，但命令真的也不多。</p>
-<p>但是如果从另外一个角度，很多时候NAT的细节问题又不简单。</p>
-<p>不信？</p>
-<p>我们先看几个小问题，看你能想到多深。</p>
-<ol>
-<li>某个企业只有一个公网IP地址，使用这个公网IP地址给内网地址做源地址转换（这里说的自然是端口转换，也就是所谓的NAPT）上Internet，那内网用户能同时发起多少个TCP连接？</li>
-<li>NAPT我们都知道是根据TCP、UDP的端口号实现一个公网IP对多个内网IP的同时映射转换，那ICMP呢？ 可以内网多个终端同时去ping外网的公网地址吗？ 能做到同时转换吗？</li>
-<li>NAPT场景下能实现多个内网终端使用GRE VPN同时去访问外网吗？</li>
-</ol>
-<p>以上问题有兴趣可以自己思考，后续你会在文章中看看真正的答案和你想的差多远。</p>
-<h2 id="基础知识点">基础知识点</h2>
-<h3 id="nat的本质到底是什么">NAT的本质到底是什么</h3>
-<p>NAT是什么各位高工相信不用我废话。其实现在我们聊到NAT，很多时候都在说端口转换（NAPT），这个使用频率说是第一，应该没人敢说第二。</p>
-<p>除了这个给内网用户访问Internet做端口转换的技术外，很多时候我们还会提到另外一个概念，端口映射（NAT server），这两种NAT技术基本上覆盖了绝大多数NAT的使用场景。</p>
-<p>那今天借着这两个技术，我们回顾下实现NAT技术的关键点到底是什么。</p>
-<h4 id="napt">NAPT</h4>
-<p>传统静态NAT、动态NAT技术都要求多个公网IP地址才能够对内网的私网地址进行转换。</p>
-<p>为什么？</p>
-<p>因为要建立一个转换前后的信息能够一一对应的转换表项（NAT映射表）。</p>
-<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/NAPT.png" alt="" loading="lazy"></figure>
-<p>以上图为例，使用私网地址192.168.1.100访问外网服务器200.1.1.1，使用静态NAT转换成100.1.1.1。</p>
-<p>当1.100发送的报文经过NAT设备转发到公网时，NAT设备会创建一个表项，记录转换前后的信息：</p>
-<figure data-type="image" tabindex="5"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/nat_T_1.png" alt="" loading="lazy"></figure>
-<p>当报文到达200.1.1.1之后200.1.1.1回包，这个报文到达NAT设备时，NAT设备会根据报文的目的IP（100.1.1.1）查找NAT表项，查找到inside ip，将报文目的IP转换为192.168.1.100。</p>
-<p>一个很简单的过程，有的人可能表示都听烂了。</p>
-<figure data-type="image" tabindex="6"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212529.png" alt="" loading="lazy"></figure>
-<p>但是如果表项长成这样：</p>
-<figure data-type="image" tabindex="7"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212609.png" alt="" loading="lazy"></figure>
-<p>来自公网目的IP为100.1.1.1的报文，NAT设备如何转换目的IP呢？</p>
-<p>无法判断。</p>
-<p>因为NAT table里inside ip、global ip不是一一对应的，动态IP也是一样的，无法做到一个global ip同时对应多个inside ip。</p>
-<p>所以，NAT有个核心行为：</p>
-<p><strong>构建转换前后IP报文里的信息能够一一对应的NAT table，这样回包从公网到达NAT设备时，NAT设备可以正确的反向转换。</strong></p>
-<p>不然NAT设备咋给你回包反向转换呢？都不知道你原来什么样，你让它猜吗？</p>
-<figure data-type="image" tabindex="8"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212655.png" alt="" loading="lazy"></figure>
-<p>这点很重要。</p>
-<p>所以在这个table只有inside ip和global ip时，很显然无法做到我们说的<strong>构建转换前后IP报文里的信息能够一一对应的NAT table</strong>，那怎么办？</p>
-<p>如果只有这两个元素无法实现，那就添加别的元素来实现呗。</p>
-<p>添加的信息在IP头部里最好是有一个很大的可变动值，这样才能实现一个global ip使用这个值构建多个table entry去对应内网多个inside ip，这个信息是啥？大家其实都知道：端口号。</p>
-<p>当NAT table里的元素多了端口号之后，表项就成这样：</p>
-<figure data-type="image" tabindex="9"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212740.png" alt="" loading="lazy"></figure>
-<p>此时对于目的IP都是100.1.1.1的报文，NAT设备就可以根据IP报文中的目的端口号去查找inside ip到底是192.169.1.100还是192.168.1.101，执行正确的回向报文转换。</p>
-<p>这个技术其实就是NAPT，大家也都很熟悉。</p>
-<h2 id="tcp-udp-and-more">TCP UDP and more？</h2>
-<p>大家都知道NAPT可以对IP报文的TCP、UDP的端口号进行转换，因为使用端口号加上传输层协议类型（TCP or UDP）就可以构建一个转换前信息和转换后信息一一对应的表项，实现回包的反向转换。</p>
-<p>那没有端口号的协议呢？IP头部里protocol这个字段的取值范围可是1-255，没有端口号的协议就没有办法像NAPT那样内网多个用户同时使用一个公网IP对外发起访问吗？</p>
-<p>答案自然是可以，但不是所有的没有端口号的IP上层协议都可以做到。</p>
-<p>还是那句话，能<strong>构建转换前后IP报文里的信息能够一一对应的NAT table</strong>就能反向转换，出去时正向转换那不是重点。</p>
-<figure data-type="image" tabindex="10"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316212912.png" alt="" loading="lazy"></figure>
-<p>端口号是构建表项的一个信息之一，但是不代表只有端口号可以配合IP地址构建这个转换前后信息一一对应的表项。</p>
-<h3 id="icmp">ICMP</h3>
-<p>以一个身边最常见的协议为例：ICMP。</p>
-<p>下面是某家的NAT表项里ICMP协议的条目：</p>
-<pre><code class="language-shell">Slot 0:
-Initiator:
-  Source      IP/port: 192.168.1.100/194
-  Destination IP/port: 200.1.1.1/2048
-  DS-Lite tunnel peer: -
-  VPN instance/VLAN ID/Inline ID: -/-/-
-  Protocol: ICMP(1)
-  Inbound interface: GigabitEthernet0/0
-Responder:
-  Source      IP/port: 200.1.1.1/1
-  Destination IP/port: 100.1.1.1/0
-  DS-Lite tunnel peer: -
-  VPN instance/VLAN ID/Inline ID: -/-/-
-  Protocol: ICMP(1)
-  Inbound interface: GigabitEthernet0/1
-State: ICMP_REPLY
-Application: OTHER
-Role: -
-Failover group ID: -
-Start time: 2020-01-05 23:18:05    TTL: 29s
-Initiator-&gt;Responder:            0 packets          0 bytes
-Responder-&gt;Initiator:            0 packets          0 bytes
-Total sessions found: 1
+        <updated>2020-04-13T15:10:16.000Z</updated>
+        <content type="html"><![CDATA[<h4 id="概述">概述：</h4>
+<p>小伙伴说遇到了一个问题，有个客户ACG（Application Control Gateway，某司的上网行为审计设备）本地Web认证成功之后无法跳转到设置的成功跳转页面，看了实验室成功的抓包发现不是通过HTTP 302 跳转的，不知道具体什么跳转原理也无从排查，我看了下正常跳转的报文交互，以及从Wireshark下看HTTP传输的JS页面源码，发现还是挺有趣的。</p>
+<p>先看结论：<br>
+ACG在本地web认证成功之后不是通过<code>http 302、Location header</code>方式执行页面跳转。</p>
+<p>ACG在进行认证页面跳转的时候发送<code>302 Location</code>，<code>Location</code>的url携带了参数：<code>weburl</code>，通过该参数携带了认证成功之后跳转的地址，之后通过js脚本在浏览器侧判断是否认证成功、并执行跳转。</p>
+<figure data-type="image" tabindex="1"><img src="https://upload-images.jianshu.io/upload_images/5735108-a52be61b313c26ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image" loading="lazy"></figure>
+<p>所以想要跳转成功：</p>
+<p>1. ACG给PC <code>302 location</code>重定向的url中需要携带<code>weburl</code>这个参数，携带的地址也得正确</p>
+<p>2. PC的浏览器可以正常执行<code>JS</code>脚本。</p>
+<p>可以自己新建一个html文件用浏览器打开测试下，是否可以正常执行JS的跳转：</p>
+<pre><code class="language-html">
+&lt;!DOCTYPE html&gt;
+
+&lt;html&gt;
+
+&lt;body&gt;
+
+&lt;form &gt;
+
+&lt;input type=&quot;button&quot; value=&quot;JS window open跳转&quot;  onclick=&quot;javascript:window.open('http://www.baidu.com')&quot;&gt;
+
+&lt;/form&gt;
+
+&lt;p&gt;点击submit，打开baidu&lt;/p&gt;
+
+&lt;/body&gt;
+
+&lt;/html&gt;
 
 </code></pre>
-<p>大家可以看到，很神奇的，ICMP的NAT转换表项里居然写着源、目端口号？？？</p>
-<p>ICMP的报文格式里明明没有端口号，这个端口号哪来的？</p>
-<p>大家可以看下ICMP的报文格式：</p>
-<figure data-type="image" tabindex="11"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/ICMP.png" alt="" loading="lazy"></figure>
-<p>ICMP虽然没有端口号，但是在报文字段里有type、code这两个字段，我们常见的echo request、echo reply其type  code字段值分别为8 0与0 0。</p>
-<p>在wireshark中查看下内网的ICMP请求报文，以及公网回应的ICMP Reply（还未进行目的地址转换）。</p>
-<figure data-type="image" tabindex="12"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316213550.png" alt="" loading="lazy"></figure>
-<p>内网发起的ICMP request，其type code字段的16进制值：0x0800，转换成10进制：</p>
-<figure data-type="image" tabindex="13"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/code.png" alt="" loading="lazy"></figure>
-<p>而另外一个参数：identifier，wireshark已经直接转换成10进制显示了：194。</p>
-<p>194、2048这两个值正是表项中initiator里的源端口号、目的端口号。</p>
-<p>所以NAT表项中的转换前源端口号、目的端口是什么已经不言而喻：由identifier、type+code的16进制转换而来的。</p>
-<p>再看下外网回应的ICMP request报文：</p>
-<figure data-type="image" tabindex="14"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214056.png" alt="" loading="lazy"></figure>
-<p>可以看到回应报文的type+code为0x0000，转换成10进制还是0。</p>
-<p>而identifier字段为1。</p>
-<p>这也对应了上面NAT表项中的responder方向中的源、目端口号。</p>
-<p>所以第二个问题的答案不言而喻。</p>
-<p>可以。</p>
-<h3 id="nat表项">NAT表项</h3>
-<p>ICMP的表项看的很乱，我们来看看一个正常的TCP NAT转化表项。</p>
-<pre><code class="language-shell">Slot 0:
-Initiator:
-  Source      IP/port: 192.168.1.100/26688
-  Destination IP/port: 200.1.1.1/23
-  DS-Lite tunnel peer: -
-  VPN instance/VLAN ID/Inline ID: -/-/-
-  Protocol: TCP(6)
-  Inbound interface: GigabitEthernet0/0
-Responder:
-  Source      IP/port: 200.1.1.1/23
-  Destination IP/port: 100.1.1.1/1024
-  DS-Lite tunnel peer: -
-  VPN instance/VLAN ID/Inline ID: -/-/-
-  Protocol: TCP(6)
-  Inbound interface: GigabitEthernet0/1
-State: TCP_ESTABLISHED
-Application: TELNET
-Role: -
-Failover group ID: -
-Start time: 2020-01-05 23:42:28    TTL: 3588s
-Initiator-&gt;Responder:            0 packets          0 bytes
-Responder-&gt;Initiator:            0 packets          0 bytes
-Total sessions found: 1
+<p>下面部分不感兴趣可以不用看了。</p>
+<h4 id="页面代码中相关">页面代码中相关</h4>
+<ul>
+<li>
+<p>点击认证时候的ajax部分</p>
+</li>
+<li>
+<p>执行跳转页面的function</p>
+</li>
+<li>
+<p>获取跳转页面的function</p>
+</li>
+</ul>
+<h6 id="获取跳转页面url的function">获取跳转页面url的function</h6>
+<pre><code class="language-javascript">
+function get_url_special_string(name){
+
+    var reg = new RegExp(&quot;(^|&amp;)&quot;+ name +&quot;=([^&amp;]*)(&amp;|$)&quot;);
+
+    var r = window.location.search.substr(1).match(reg);
+
+    if(r!=null)return  unescape(r[2]); return null;
+
+}
 
 </code></pre>
-<p>很明显，我们可以看出来这是一个telnet的NAT转换表项：</p>
-<pre><code class="language-shell">  Source      IP/port: 192.168.1.100/26688
-  Destination IP/port: 200.1.1.1/23
+<p>这段代码百度上很容易找到解释：<a href="https://www.jianshu.com/p/f988e4ebd627">链接</a>。甚至代码都一毛一样（除了函数名字不一样），一个字都没改，<code>ctrl c、ctrl v</code>大法赛高。<br>
+该函数作用是获取 <code>http</code>请求的<code>url</code>中<code>？</code>后边的部分，也就是<code>url</code>中携带的参数。</p>
+<p>整个认证过程中<code>http</code>头部携带的参数就只有一个：<code>weburl</code>。</p>
+<pre><code class="language-http">GET /portal/local/index.html?weburl=http%3A%2F%2F1.1.1.2 HTTP/1.1
 </code></pre>
-<p>目的端口号23，源端口号 26688。而反向报文（responder）的表项部分：</p>
-<pre><code class="language-shell">Responder:
-  Source      IP/port: 200.1.1.1/23
-  Destination IP/port: 100.1.1.1/1024
+<p>最开始我以为这个<code>weburl</code>作用是表明ACG认证页面是从哪个原始地址跳转过来的，但是看代码似乎并不是，而是表明认证成功之后跳转的页面。</p>
+<p>想想也是，ACG全程在url参数中携带认证之前的url地址干啥，认证之后又不会给跳转回去.....，主要这个抓包里认证前访问的地址刚好也是1.1.1.2，跳转页面也是1.1.1.2，容易让人误解。</p>
+<h6 id="执行跳转页面的function">执行跳转页面的function</h6>
+<pre><code class="language-javascript">
+function btn_win_open(url){
+
+  if(url !='null'){
+
+      $('#redirect').unbind();
+
+      $('#redirect').click(function(){window.open(url)});
+
+      $(&quot;#redirect&quot;).trigger(&quot;click&quot;);
+
+  }
+
+}
+
 </code></pre>
-<p>源端口号23，目的端口号1024，反向推理不难得出经过NAT转换之后正向报文的192.168.1.100的26688端口应该是被转换成了100.1.1.1的1024端口，我们可以在被telnet的200.1.1.1上验证下。</p>
-<pre><code class="language-shell">*: TCP connection with authentication
- Local Addr:port       Foreign Addr:port     State       Slot  PCB
- 0.0.0.0:23            0.0.0.0:0             LISTEN      0     0xffffffffffffff9d
- 200.1.1.1:23          100.1.1.1:1024        ESTABLISHED 0     0xffffffffffffff9f
+<p>传入一个url，通过<code>window.open(url)</code>在浏览器中打开这个url，也就是所谓的页面跳转。</p>
+<h6 id="点击认证时候的ajax部分">点击认证时候的ajax部分</h6>
+<pre><code class="language-javascript">
+$.ajax({
+
+        url: '../../portal.cgi',
+
+        type: 'POST',
+
+        data: 'username=' + encodeURI(username) + '&amp;password=' + password +'&amp;language='+language+ '&amp;submit=submit'
+
+        async: false,
+
+        timeout: 30000,
+
+        success: function(data) {
+
+            var weburl = decodeURIComponent(get_url_special_string(&quot;weburl&quot;)),logincookie= '';
+
+
+                     if(weburl){
+
+                                btn_win_open(weburl);
+
+                    if(weburl){
+
+                        btn_win_open(weburl);
+
+}
+
 </code></pre>
-<p>从这里我们看出来，正常的TCP、UDP表项中responder方向的源、目端口号可以和被转换后的正向报文源、目端口号对应，ICMP只是特例。</p>
-<p>再想想还有什么细节。</p>
-<p>为什么记录原始报文的目的地址、目的端口号？</p>
-<figure data-type="image" tabindex="15"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214400.png" alt="" loading="lazy"></figure>
-<p>以上面的NAT table来看，只记录转换前的源端口和转换后的源端口不就可以了，完全可以实现回包的一对一查找啊。</p>
-<p>下面看下表项扩充之后的例子：</p>
-<figure data-type="image" tabindex="16"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214445.png" alt="" loading="lazy"></figure>
-<p>单独看上表是不是觉得完全是多此一举。</p>
-<p>下面我们为该表项增加两个条目。</p>
-<figure data-type="image" tabindex="17"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214517.png" alt="" loading="lazy"></figure>
-<p>看下Index 2和index 1对比：</p>
-<ol>
-<li>相同的目的IP、但是目的端口不一致，一个是23、一个是80。</li>
-<li>同时转换前内网主机的源端口号也不一致。</li>
-<li>但是转化后的源端口一致，都是1024。</li>
-</ol>
-<p>那大家想下，现在NAT设备收到两个回包：</p>
-<ol>
-<li>目的IP、目的端口都是100.1.1.1、1024</li>
-<li>源IP都是200.1.1.1</li>
-<li>源端口不一致，一个是23、一个是80。</li>
-</ol>
-<p>那NAT设备能准确地将这两个回包进行反向转换吗？</p>
-<figure data-type="image" tabindex="18"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214612.png" alt="" loading="lazy"></figure>
-<p>答案是可以的。</p>
-<p>使用</p>
-<p>[目的IP 100.1.1.1、目的端口 1024、源IP 200.1.1.1、源端口 23]</p>
-<p>查找到的表项只会是index 1,而使用</p>
-<p>[目的IP 100.1.1.1、目的端口 1024、源IP 200.1.1.1、源端口 80]</p>
-<p>去查找到的也只会是index 2。</p>
-<p>那再看下index 1 和 3呢？</p>
-<p>回包都是[目的IP 100.1.1.1、目的端口1024]，但是拥有不同的[源IP地址、相同的源端口号]，NAT设备能够正常转换吗？</p>
-<p>答案还是可以。</p>
-<h3 id="nat无限次转换">NAT无限次转换</h3>
-<figure data-type="image" tabindex="19"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214732.png" alt="" loading="lazy"></figure>
-<p>是不是发现只要上面这个表格里底色是灰色的部分只要存在元素不一致，就可以实现回包的精准反向转换。</p>
-<p>我们假设下在只有一个公网IP、传输层协议固定为TCP的情况下，能同时转换多少个内网的TCP连接呢？</p>
-<p>只要正向报文的目的IP、目的端口其中存在一个不一致，一个公网IP的源端口就可以一直复用，而实际生活中内网用户访问外网时[目的IP、目的端口]一致的情况并不是很常见，所以大致想下这个表项能有多少个可能的组合呢：</p>
-<p>（可用源端口：65536 – 1024）</p>
-<p>x</p>
-<p>（全球不同的目的公网IP：2的32次方，实际要去掉D、E地址段、私网地址段）</p>
-<p>x</p>
-<p>（不同的目的端口号：65536，当然实际业务中目的端口号没这么多，一般都是一些常见目的端口号）</p>
-<p>我是没算，但是这个数字绝对很恐怖。</p>
-<p>所以回想下第一个问题：</p>
-<p><em>某个企业只有一个公网IP地址，使用这个公网IP地址给内网地址做源地址转换（这里说的自然是端口转换，也就是所谓的NAPT）上Internet，那内网用户能同时发起多少个TCP连接？</em></p>
-<p>很多个，只要这个NAT设备支持在NAT表项中记录目的IP、目的端口。</p>
-<p>答案绝不止是65536-1024那么简单。</p>
-<p>现在很多设备早已支持这种技术，只是不同的厂家可能称呼不同。比如我知道的H某C叫NAT无限次转换。</p>
-<p>而设备上需要付出额外的代价吗？</p>
-<p>还是要的。</p>
-<p>毕竟一条NAT转换的记录中多了几字节内容，记录到内存中占用的内存空间也多一些，在一个拥有数百G流量的CGN(Carrier-grade <em>NAT</em>)设备上，那种量级的NAT表项多出来的内存占用也是不小的数字。</p>
-<h3 id="application">Application</h3>
-<p>应用识别最近几年在NGFW（Next Generation Firewall）上挺火的，不支持应用识别的FW都不好意思叫自己NGFW。应用识别简单地说就是设备就查看报文应用层内容，识别出流量特征，判断出该流量属于哪个应用，比如都是80端口或者443端口，但是访问的网站不同，应用识别可以识别出具体访问的网站类型（甚至是网站名称）。</p>
-<p>下面我们就看下假如NAT表项中存在application这一项内容会如何。</p>
-<figure data-type="image" tabindex="20"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316214856.png" alt="" loading="lazy"></figure>
-<p>假设访问相同的目的IP、目的端口（80，都是web业务），但是NAT设备支持应用识别，能识别到在HTTP头部中网站的url是不同的，把数据流识别成不同的应用，那这样是不是NAT表项中又多了一项内容？</p>
-<p>理论上可以，不过表项不太可能长成这样，毕竟一般访问公网不同的业务都是不同的目的IP（可能目的端口相同）但是应用层数据不同。</p>
-<p>那更具有实际应用场景的是什么呢？</p>
-<p>大家想下端口映射，端口映射需要根据目的IP、目的端口将报文转换并发往内网的目的IP、内网端口，这也是个一对一映射的表项。</p>
-<figure data-type="image" tabindex="21"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215025.png" alt="" loading="lazy"></figure>
-<p>但是很多时候会有这样一种需求，只有一个公网IP、一个端口号，把来自外网的访问映射到内网不同的服务器、端口上。</p>
-<p>如果只是根据传输层端口号肯定做不到以上的需求，但是加上应用层信息就可以实现，应用层识别到不同的HTTP URL就可以做到将报文转发到内网不同的服务器上。</p>
-<figure data-type="image" tabindex="22"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316230105.png" alt="" loading="lazy"></figure>
-<p>其实这就是应用层负载均衡、WAF（Web application Firewall，代理模式下）的功能，如果这么想是不是觉得原理和NAT Server很像，只是加入了应用层信息构建表项。</p>
-<figure data-type="image" tabindex="23"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215118.png" alt="" loading="lazy"></figure>
-<p>不过代价是：识别应用层信息对设备的CPU开销会显著增加。</p>
-<p>同时还有什么代价？</p>
-<p>简单回顾下三次握手：TCP三次握手建立之后才会传输真正的内容，也就是说在三次握手完成之前，没有传输层内容，没有所谓的HTTP URL，设备无法在TCP三次握手完成之前判断怎么转换IP头部，那咋办？</p>
-<figure data-type="image" tabindex="24"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316215152.png" alt="" loading="lazy"></figure>
-<p>既然三次握手之后才会有，那设备就做个TCP代理呗，响应客户的TCP SYN，完成三次握手之后再决定把报文发给内网的哪个设备。</p>
-<figure data-type="image" tabindex="25"><img src="https://raw.githubusercontent.com/Behemothes/Behemothes_pic/master/img/20200316225043.png" alt="" loading="lazy"></figure>
-<h2 id="总结">总结</h2>
-<p>NAT从简简单单的只需要查看传输层信息到需要查看应用层信息，最后又多了一个维护大量TCP连接的重担，所以性能损耗增加的不是一点点，并且受限于TCP连接数问题，单位时间内能够维持的TCP连接数和设备只是做NAT转换、转发的报文数量比起来，真的差太多了，有兴趣的话可以看看《HTTP权威指南》中的第四章，其中有详细介绍。</p>
-<p>所以到这是不是发现，只是一个简简单单的NAT源地址、源端口转换，目的IP、目的端口转换，原来也不是那么简单，原来还是有一些想不到的细节在里面。</p>
-<p>当然，这个和什么NAT ALG、VPN遇见NAT比起来还算好。。</p>
-<p>所以下一个章节就是回答第三个问题，NAT与VPN之间的兼容性问题。</p>
+<p>向<code>/portal.cgi</code>提交认证的账号密码，中间省略一堆内容，如果认证成功（success），执行一个函数，在函数中存在一个判断条件：</p>
+<p><code>if(weburl)</code></p>
+<p>也就是<code>weburl</code>如果存在，执行 <code>btn_win_open</code>函数，也就是跳转页面的函数，完成认证成功后跳转到页面的功能。</p>
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[使用python登录交换机并自动创建账户]]></title>
-        <id>https://behemothes.github.io/Behemothes/post/shi-yong-python-deng-lu-jiao-huan-ji-bing-zi-dong-chuang-jian-zhang-hu/</id>
-        <link href="https://behemothes.github.io/Behemothes/post/shi-yong-python-deng-lu-jiao-huan-ji-bing-zi-dong-chuang-jian-zhang-hu/">
+        <title type="html"><![CDATA[ python字符问题]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/python-zi-fu-wen-ti/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/python-zi-fu-wen-ti/">
         </link>
-        <updated>2020-03-16T08:40:58.000Z</updated>
-        <content type="html"><![CDATA[<pre><code class="language-python">import logging
-import telnetlib
-import time
-import datetime
+        <updated>2020-04-13T15:04:43.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="二进制">二进制</h2>
+<p>这里不做过多介绍，网络物理传输介质是二进制，计算机最终存储的也是二进制，bit。</p>
+<h2 id="ascii">ascii</h2>
+<p>数字可以直接十进制与二进制转换，以二进制存储。但是非数字的字符如何存储？ 计算机最开始是在美国，所以产生了将英文字符-十进制<br>
+数字的对应关系表，也就是ascii编码。</p>
+<h2 id="中文编码">中文编码</h2>
+<p><code>ascii</code>不支持中文，所以中国制定了自己的字符编码。<br>
+<code>GB2312</code>-国标码，1981年产生，常用汉字。<br>
+<code>GBK1.0</code>-1995年发布，向下兼容，收录更多的汉字，以及中日韩里的汉字。<br>
+<code>GB18030</code>-2000年发布，收录更多汉字以及少数名族。<br>
+<code>BIG5</code>-台湾用，繁体字。</p>
+<h2 id="unicode">Unicode</h2>
+<p>万国码。解决不同国家之间的字符编码相互兼容问题，由国家代码+本国的字符编码组成，最小2byte(国家代码+<code>ascii</code>)，但是很多国家<br>
+的字符编码，1byte不够用，所以<code>unicode</code>长度不固定。<br>
+<code>ISO</code>制定。</p>
+<h2 id="字符编码方式">字符编码方式</h2>
+<p>Unicode是一种兼容各国语言的编码方式。基本每个<br>
+国家都有自己的字符到二进制的编码方式,常见的<code>ascii</code>、<code>GBK</code>。常见的乱码就是由于编码方式不一致导致，统一使用unicode<br>
+虽然可以解决乱码的问题，但是对于传输而言效率并不是最高，如果传输的都是<code>ascii</code>，那使用unicode编码方式进行传输，就会<br>
+多占用字节空间(也就是传输的所需带宽会增加)。</p>
+<p>因此<code>utf-8</code>产生。</p>
+<p><code>utf</code>-Unicode Transformation Format，对于<code>Unicode</code>编码的压缩和优化。</p>
+<p><code>utf-8</code>的编码长度并不固定，而是根据字符内容不同，如英文会变编译为1字节长度，中文常见字符3字节。<br>
+基本上可以认为<code>ascii</code>编码是<code>utf-8</code>编码的一个子集，因此使用<code>ascii</code>进行编码的，在<code>utf-8</code>下可以正常显示。</p>
+<p><strong>总结下：unicode可以看做一种实现方式、标准（也有Unicode方式编码），但是具体使用时是utf-8，实际还有utf-16、utf-32</strong></p>
+<h2 id="python2-3中的字符编码">python2 3中的字符编码</h2>
+<ul>
+<li>python2<br>
+<code>python2</code>中默认字符编码方式为<code>ascii</code>，可以手动更改字符编码方式，但是在内存中存储、执行的就是手动声明的编码。<br>
+比如在<code>python2</code>中手动声明字符编码为<code>utf-8</code>，那内存中存储、执行时也会是<code>utf-8</code>，中文windows一般是支持<code>Unicode</code>和<code>GBK</code>，所<br>
+以结果可想而知，乱码。</li>
+<li>python3<br>
+<code>python3</code>中就不太一样了，默认<code>Unicode</code>，在内存中也是<code>Unicode</code>，windows支持<code>Unicode</code>，所以不会乱码，<strong>并且</strong>:即便声明了<br>
+编码方式，在内存中还是<code>Unicode</code>，不怕乱码，在这里其实<code>python3</code>存在自动的<code>decode</code>、<code>encode</code>，到内存时声明的编码会自动<code>decode</code>为<br>
+<code>Unicode</code>，而存储到文件时又会自动将<code>Unicode</code> <code>encode</code>为声明的编码。</li>
+</ul>
+<h4 id="编码与解码">编码与解码</h4>
+<p>编码：<code>encode</code>，从别的编码方式到<code>Unicode</code><br>
+解码：<code>decode</code>，从<code>Unicode</code>到别的编码方式</p>
+<figure data-type="image" tabindex="1"><img src="https://img2018.cnblogs.com/blog/1527257/201811/1527257-20181107162220149-1623138375.png" alt="image" loading="lazy"></figure>
+<h3 id="数据类型-字符串">数据类型-字符串</h3>
+<p>-有序、可迭代</p>
+<ul>
+<li>不可变</li>
+</ul>
+<pre><code class="language-python">a = 'hack'
+print(id(a))
+a = 'tools'
+print(id(a))
 
-class telnetclient():
-    def __init__(self,host_ip):
-        self.tn = telnetlib.Telnet()
-        self.host_ip = host_ip
-    def login_H3C_SW(self,username,password):
-        try:
-            self.tn.open(self.host_ip,port =23,timeout = 3)
-        except:
-            logging.warning(f'{self.host_ip} connect failed!')
+60878240
+60878144
+</code></pre>
+<p>可以看到内存位置发生了变化，所以重新赋值，原始变量已经变化。</p>
+<h2 id="python-2-3中的字符串">python 2 3中的字符串</h2>
+<p>虽然2和3中都存在<code>str</code>类型，但是2 3中两者区别却很大。</p>
+<ul>
+<li>python2<br>
+python2中的字符串直接查看字符是以16进制方式显示的数值，虽然<code>print</code>出来的并不是。</li>
+</ul>
+<pre><code class="language-python">&gt;&gt;&gt; s
+'\xe8\xb7\xaf\xe9\xa3\x9e'   #python2中的字符串
+</code></pre>
+<p>在python2中字符串的类型<code>str</code>其实和<code>bytes</code>没什么区别，所以可以叫做<code>字节串</code>,<code>bytes</code>里的内容就是字符的编码以16进制展示。<br>
+在python2中字符串前加上<code>b</code>，之后查看该字符串类型就是<code>bytes</code>。</p>
+<p>那么<code>bytes</code>类型实际干嘛呢？ 对文件(图片、视频等file)操作时，直接以二进制操作，此时就要求数据类型为<code>bytes</code>。</p>
+<pre><code class="language-python">a = 'hack'
+print(type(a))
+b = b'hack'
+print(type(b))
+
+&lt;type 'str'&gt;
+&lt;type 'bytes'&gt;
+</code></pre>
+<p>同时在python2中还存在一个<code>unicode</code>类型，<code>str</code> <code>decode</code>之后的类型就是<code>unicode</code>。</p>
+<pre><code class="language-python">&gt;&gt;&gt; s
+'\xe8\xb7\xaf\xe9\xa3\x9e'
+&gt;&gt;&gt; s2 = s.decode(&quot;utf-8&quot;)
+&gt;&gt;&gt; s2
+u'\u8def\u98de'
+&gt;&gt;&gt; type(s2)
+&lt;type 'unicode'&gt;
+</code></pre>
+<p>或者直接在字符串前加上<code>u</code>，这样该字符串的变量数据类型就是<code>unicode</code>。</p>
+<ul>
+<li>python3<br>
+3中就比较简单了，<code>str</code>是<code>str</code>，<code>bytes</code>是<code>bytes</code>，<code>str</code>默认就是<code>unicode</code>，也不需要再去手动地<code>decode</code>。</li>
+</ul>
+<pre><code class="language-python">a = 'hack'
+b = u'hack'
+print(type(a))
+print(type(b))
+&lt;class 'str'&gt;
+&lt;class 'str'&gt;
+</code></pre>
+<p>可以看到<code>u'hack'</code>也是<code>str</code>。</p>
+<h3 id="bytes">bytes</h3>
+<p>python3中字符<code>str</code>在内存中以<code>unicode</code>编码表示，如果需要通过网络传输或者保存到磁盘，需要转换为<code>bytes</code>类型。</p>
+<p>不同于<code>str</code>，<code>bytes</code>每个字符占用1字节。</p>
+<p>可以使用<code>encode()</code>,<code>decode()</code>对<code>str</code>、<code>bytes</code>之间的相互转换。</p>
+<pre><code class="language-python">a = 'abc中文'
+print(a.encode('utf-8',errors='ignore'))
+b = a.encode('utf-8',errors='ignore')
+print(type(b))
+b'abc\xe4\xb8\xad\xe6\x96\x87'
+&lt;class 'bytes'&gt;
+</code></pre>
+<p>在这里字符串<code>a</code>的内容为<code>abc中文</code>，将<code>unicode</code>编码<code>encode</code>之后<code>print</code>可以发现中文已经被转成16进制<code>\xe4\xb8\xad\xe6\x96\x87</code>，<br>
+而<code>abc</code>还是<code>abc</code>，这里显示的<code>abc</code>不是16进制的<code>abc</code>，而是被python做了转换，直接显示英文的<code>abc</code>，实际内容应该是<code>\x61\x62\x63</code>。<br>
+用下面的代码验证下：</p>
+<pre><code class="language-python">c = b'\x61\x62\x63\xe4\xb8\xad\xe6\x96\x87'
+print(c)
+print(c.decode('utf-8'))
+执行结果:
+b'abc\xe4\xb8\xad\xe6\x96\x87'
+abc中文
+</code></pre>
+<p>如果这样：</p>
+<pre><code class="language-python">d = b'abc\x64'
+print(d)
+执行结果：
+b'abcd'
+</code></pre>
+<p>说明，直接创建<code>bytes</code>类型数据时写<code>b'abc'</code>，也是被自动转换了，严格来写，<code>bytes</code>类型数据里面的内容都是<code>\x12</code>这种形式。</p>
+<p>无法包含使用该编码方式无法解码的内容，会出现报错，可以传入<code>erros='ignore'</code>忽略报错。</p>
+<pre><code class="language-python">print(len('abc'.encode('utf-8',errors='ignore')))
+print(len('中文'.encode('utf-8',errors='ignore')))
+3
+6
+</code></pre>
+<p>同时，也可以看出来，utf-8的编码方式下，英文一般一个字符占用一个字节，而中文一个字符占用三个字节。(<code>len()</code>对于<code>bytes</code><br>
+统计的是其占用的字节长度)。</p>
+<h2 id="python标准库之struct">python标准库之struct</h2>
+<p>在前面提到了<code>bytes</code>类型的字符串，实际python的数据类型并没有专门的字节类型(16进制)。而<code>struct</code>可以把任意的数据类型转换成以<br>
+字节类型(<code>bytes</code>)的方式展现。</p>
+<pre><code class="language-python">import struct
+import binascii
+
+values = ('中文'.encode('utf-8'))
+pack_data =struct.pack('6s',values)
+print(pack_data)
+print(f'packed value {binascii.hexlify(pack_data)}')
+</code></pre>
+<p>执行结果：<br>
+<code>b'\xe4\xb8\xad\xe6\x96\x87' packed value b'e4b8ade69687'</code><br>
+其中<code>3s</code>表示3个string类型的数据，当然这里也支持其余的数据类型，具体可以在官方文档中查看。</p>
+<p>而解析也很简单，使用<code>unpack()</code>即可。</p>
+<pre><code class="language-python">print(struct.unpack('3s',pack_data))
+</code></pre>
+<p><a href="https://docs.python.org/3/library/struct.html">官方文档</a></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[模块]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/mo-kuai/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/mo-kuai/">
+        </link>
+        <updated>2020-04-13T15:03:53.000Z</updated>
+        <content type="html"><![CDATA[<p>将不同的功能(函数、function)放到不同的文件中，方便后期维护，让程序结构更加清晰。</p>
+<h3 id="模块的分类">模块的分类</h3>
+<ul>
+<li>内置模块，标准模块,可以在交互式中<code>python</code>如下方式查看：</li>
+</ul>
+<pre><code class="language-python">&gt;&gt;&gt; help('modules')
+
+Please wait a moment while I gather a list of all available modules...
+
+__future__          _tracemalloc        glob                secrets
+_abc                _warnings           gzip                select
+_ast                _weakref            hashlib             selectors
+_asyncio            _weakrefset         heapq               selenium
+_bisect             _winapi             hmac                setuptools
+_blake2             abc                 html                shelve
+_bootlocale         aifc                http                shlex
+_bz2                antigravity         idlelib             shutil
+_codecs             argparse            imaplib             signal
+_codecs_cn          array               imghdr              site
+_codecs_hk          ast                 imp                 smtpd
+_codecs_iso2022     asynchat            importlib           smtplib
+_codecs_jp          asyncio             inspect             sndhdr
+</code></pre>
+<ul>
+<li>第三方开源模块，在<code>python</code>的官方站点 <a href="https://pypi.org/">python官网模块站点</a>注册，可以通过<code>pip install</code>安装。不过一般<br>
+使用官网站点pip install速度会比较慢，站点在国外，大家都懂得，所以可以将pip install的安装站点更换为国内镜像站点（豆瓣）。<br>
+<code>pip install -i http://pypi.douban.com/simple/ --trusted-host=pypi.douban.com/simple [module name]</code></li>
+<li>自定义模块<br>
+就是自己在本地写的。</li>
+</ul>
+<h3 id="模块导入">模块导入</h3>
+<p>经常能看到的模块导入有如下几种方式：</p>
+<ul>
+<li>import module<br>
+直接导入一个module，没什么好说的，前提导入该module的py文件在当前路径或者系统变量中的路径里能找到这个module name。</li>
+<li>from module import function or class  ``<br>
+导入module中的某个function、class，并不是导入整个module。例如在<code>module1.py</code>中定义了function <code>def func_1():</code>，那就可以这么写：</li>
+</ul>
+<pre><code class="language-python">from one.module1 import func_1
+</code></pre>
+<p>前面的<code>from one.module1</code>，路径时再详细展开。</p>
+<ul>
+<li>from x.x.x import *<br>
+和上面相反，这个就是导入全部的function。</li>
+</ul>
+<h3 id="模块的查找路径">模块的查找路径</h3>
+<p>从<code>sys.path</code>中的路径以此去查找该名称的模块，如果查找不到就不导入。</p>
+<pre><code class="language-python">import sys
+print(sys.path)
+</code></pre>
+<p>打印结果是一个<code>list</code>，可以对这个<code>list</code>进行<code>append</code>，这样在执行时可以<strong>临时</strong>地改变sys.path，让该文件的导入路径存在自己想<br>
+要的路径。</p>
+<p>一般来说，第三方安装的模块都在<code>site-packages</code>这个目录下。</p>
+<h3 id="跨路径导入模块">跨路径导入模块</h3>
+<p>常见问题，假设一个一下的目录结构。<br>
+total<br>
+|-one<br>
+|--module1.py<br>
+|-two<br>
+|--module2.py<br>
+main.py</p>
+<p>module1.py的内容：</p>
+<pre><code class="language-python">    def func_1():
+    print('this mudule 1')
+</code></pre>
+<p>module2.py的内容：</p>
+<pre><code class="language-python">    def func_2():
+    print('this mudule 2')
+</code></pre>
+<p>我们来看下几个场景。</p>
+<ul>
+<li>在<code>main.py</code>中导入<code>module1.py</code>以及<code>module2.py</code></li>
+</ul>
+<pre><code class="language-python">from one import module1
+from two import module2
+
+module1.func_1()
+module2.func_2()
+</code></pre>
+<p><code>main.py</code>的当今路径下存在文件夹<code>one</code> <code>two</code>，因此可以使用该方式导入，所以可以看出来导入时路径信息也是存在的。</p>
+<ul>
+<li>在<code>main.py</code>中导入<code>module1.py</code>，并且<code>module1.py</code>此时增加了内容，调用了<code>module2.py</code>中的函数。<br>
+分别看下三个文件的内容是如何写的：<br>
+main.py:</li>
+</ul>
+<pre><code class="language-python">from one import module1
+
+module1.func_1()
+</code></pre>
+<p>module1.py：</p>
+<pre><code class="language-python">from two import module2
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>module2.py:</p>
+<pre><code class="language-python">def func_2():
+    print('this mudule 2')
+</code></pre>
+<p>此时执行<code>main.py</code>结果如何？ 会报错吗？ 不会，能正常执行：</p>
+<pre><code class="language-python">this mudule 2
+this mudule 1
+</code></pre>
+<p>是不是比较奇怪，<code>module1.py</code>中直接<code>from two import module2</code>能正常导入<code>module2</code>? <code>module1.py</code>的<code>sys.path</code>里肯定找不到这个路径，<br>
+父一级目录才能找到才对？最开始我也是这么想的。</p>
+<p>这时候如果试着去直接执行<code>module1.py</code>就会发现，报错了。</p>
+<pre><code class="language-python">    from two import module2
+ModuleNotFoundError: No module named 'two'
+</code></pre>
+<p>所以这里大概可以看出来python的执行方式，在<code>main.py</code>中导入<code>module1.py</code>时，是在<code>main.py</code>的路径下去执行<code>from two import module2</code><br>
+,此时自然能够导入。但是如果直接执行<code>module2.py</code>,那肯定找不到的。</p>
+<p>由此引发第三个问题？<code>module2.py</code>中怎么导入<code>module1.py</code>。</p>
+<ul>
+<li><code>module2.py</code>中导入<code>module1.py</code><br>
+尝试这样：</li>
+</ul>
+<pre><code class="language-python">from ..two import module2  #从上一级目录找到two
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>理论上可行，如果<code>two</code>这个文件夹不是顶级目录的话。(这里每个路径我都加了__init__.py，变成了package)</p>
+<pre><code class="language-python">attempted relative import beyond top-level package
+</code></pre>
+<p>在python中，通过相对路径导入，只能到顶级目录，所以这种方式GG。所谓顶级目录，就是该文件所在的路径，所以相对路径方式可以用于<br>
+同目录、子目录方式。</p>
+<p>看下真正的做法，使用<code>os</code> <code>sys</code>模块。</p>
+<pre><code class="language-python">import os,sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+from two import module2
+def func_1():
+    print('this mudule 1')
+
+module2.func_2()
+</code></pre>
+<p>正常导入。</p>
+<ol>
+<li><code>os.path.abspath(__file__)</code>获取了当前py文件的绝对路径<code>/total/one/module1.py</code>。</li>
+<li>然后使用<code>os.path.dirname</code>获取父目录。</li>
+<li>这里使用了2次，也就是获取到<code>/total</code>,把这个路径临时加到<code>sys.path</code></li>
+<li><code>sys.path</code>改变后，此时再去<code>form two import module2</code>，可以正常查找到。</li>
+</ol>
+<p>模块内容至此结束，package的内容也涉及了很多。</p>
+<h2 id="包-package">包-package</h2>
+<p>一个文件内包含很多module，这就叫做package，区别是这个文件夹内必须存在一个<code>__int__.py</code>。</p>
+<h3 id="跨模块导入">跨模块导入</h3>
+<p>前面模块导入的第三种，但是其实这种实现方式并不是官方推荐方式，官方推荐方式是第二种方式，在顶级目录下写一个入口程序。</p>
+<h3 id="相对路径导入-绝对路径导入">相对路径导入、绝对路径导入</h3>
+<p><code>from . import action</code><br>
+从当前路径下导入，<code>..</code>代表上层目录，<code>...</code>代表上上层目录。</p>
+<p><strong>注意事项</strong></p>
+<ol>
+<li>必须是package的路径(存在__init__.py)</li>
+<li>不能作为顶层模块来执行该文件夹中的py文件（即不能作为主函数的入口）。导入模块不能到程序的入口，还是以前面例子为例，<code>module2.py</code>中<br>
+如果导入了一个<code>module</code>，这个<code>module</code>内相对导入了一个和<code>module2</code>同一个层级的<code>module</code>，此时就算到了程序入口这个level的路径，就会报错：<br>
+<code>ValueError: attempted relative import beyond top-level package</code></li>
+</ol>
+<h2 id="sys模块">sys模块</h2>
+<ul>
+<li>sys.argv<br>
+返回参数列表，以<code>list</code>形式，第一个参数是<code>.py</code>文件自身。<br>
+<code>['C:/Users/Chris/PycharmProjects/scapy/每周一个python标准库/module_learning/two/test.py']</code></li>
+<li>sys.version<br>
+获得python解释器的版本</li>
+<li>sys.path<br>
+python解释器的环境变量</li>
+<li>sys.platform<br>
+操作系统平台名称<br>
+<code>win32</code></li>
+<li>sys.getdefaultencoding()<br>
+获取系统默认的字符编码 - <code>utf-8</code></li>
+<li>sys.getfilesystemencoding()<br>
+获取系统将内存中数据存储到文件中时的字符编码  - <code>utf-8</code></li>
+</ul>
+<h2 id="os模块">os模块</h2>
+<ul>
+<li>os.getcwd()<br>
+当前工作目录</li>
+<li>os.listdir()<br>
+当前路径下所有文件、目录</li>
+<li>os.removedirs（r“c：\python”）<br>
+删除整个文件夹，支持递归路径</li>
+<li>os.path.isfile(<strong>file</strong>)<br>
+是否为文件，返回Boolean值</li>
+<li>os.path.isdir()<br>
+是否为文件夹，返回Boolean值</li>
+<li>os.path.isabs()<br>
+是否为绝对路径</li>
+</ul>
+<pre><code class="language-python">dir_abs = os.path.abspath(__file__)
+print(os.path.isabs(dir_abs))
+Ture 
+</code></pre>
+<ul>
+<li>os.path.split()<br>
+将abs路径分割成为文件名以及所在路径，<code>tuple</code>形式返回结果<br>
+<code>print(os.path.split(dir_abs))</code><br>
+<code>('C:\\Users\\Chris\\PycharmProjects\\scapy\\每周一个python标准库\\module_learning\\two', 'test.py')</code></li>
+<li>os.path.splitext()<br>
+获取扩展名,返回<code>tuple</code>，结果如下形式：</li>
+</ul>
+<pre><code class="language-python">('C:\\Users\\Chris\\PycharmProjects\\scapy\\每周一个python标准库\\module_learning\\two\\test', '.py')
+</code></pre>
+<ul>
+<li>os.path.dirname()<br>
+获取路径名字</li>
+</ul>
+<pre><code class="language-python">print(os.path.dirname(dir_abs))
+C:\Users\Chris\PycharmProjects\scapy\每周一个python标准库\module_learning\two
+</code></pre>
+<ul>
+<li>os.path.basename()<br>
+获取文件名</li>
+</ul>
+<pre><code class="language-python">print(os.path.basename(dir_abs))  
+test.py
+</code></pre>
+<ul>
+<li>os.system()<br>
+执行系统命令</li>
+</ul>
+<pre><code class="language-python">os.system('ping 192.168.123.1')
+</code></pre>
+<ul>
+<li>os.environ<br>
+返回操作系统变量</li>
+<li>os.name<br>
+获取操作系统名称，windows为<code>nt</code></li>
+<li>os.makedirs（r“c：\python\test”）<br>
+递归创建多级目录</li>
+<li>os.mkdir()<br>
+创建一级目录</li>
+<li>os.path.getsize()<br>
+获取文件大小</li>
+<li>os.path.join(dir,filename)<br>
+将文件和路径拼接在一起，有效解决不同操作系统路径分隔符不一致的问题</li>
+<li>os.chdir(dirname)<br>
+改变当前工作目录</li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[logging模块]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/logging-mo-kuai/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/logging-mo-kuai/">
+        </link>
+        <updated>2020-04-13T15:02:31.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="概述">概述</h2>
+<p>用于记录日志信息的模块，可以提供非常完善的信息记录，以及可定义的记录方式。</p>
+<h2 id="模块结构">模块结构</h2>
+<ul>
+<li>logger<br>
+logger main class，记录日志时创建的对象。</li>
+<li>handler<br>
+简单理解为定义将日志输出到何处，输出到<code>stream</code>、<code>file</code>还是通过<code>socket</code>到<code>http</code>服务器</li>
+<li>formatter<br>
+logging 支持强大的自定义日志格式，就是通过该部分实现</li>
+<li>filter<br>
+过滤日志，只保留想要的日志</li>
+</ul>
+<h2 id="基本用法">基本用法</h2>
+<pre><code class="language-python">import logging
+
+logging.basicConfig(filename='log.log',
+                    filemode = 'w',
+                    level=logging.INFO,
+                    format = '%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s',
+                    datefmt='%Y%m%d %H:%M:%S ',
+                    )
+logger = logging.getLogger(__name__)
+
+logger.info('this is a log info')
+logger.debug('this debug info will not be show')
+logger.warning('warning info')
+logger.info('finish')
+</code></pre>
+<ul>
+<li>basicConfig<br>
+可以设置一些logging输出的内容。</li>
+</ul>
+<ol>
+<li>filename<br>
+将日志输出到文件，指定文件名</li>
+<li>filemode<br>
+追加模式<code>a</code>，还是写模式<code>w</code></li>
+<li>format<br>
+前面说到logging支持强大的自定义日志格式，即是通过<code>format</code> 实现。format可以指定的常见格式如下：<br>
+%(levelno)s：打印日志级别的数值。<br>
+%(levelname)s：打印日志级别的名称。<br>
+%(pathname)s：打印当前执行程序的路径，其实就是sys.argv[0]<br>
+%(filename)s：打印当前执行程序名。<br>
+%(funcName)s：打印日志的当前函数。<br>
+%(lineno)d：打印日志的当前行号。<br>
+%(asctime)s：打印日志的时间。<br>
+%(thread)d：打印线程ID。<br>
+%(threadName)s：打印线程名称。<br>
+%(process)d：打印进程ID。<br>
+%(processName)s：打印线程名称。<br>
+%(module)s：打印模块名称。<br>
+%(message)s：打印日志信息。</li>
+<li>datefmt<br>
+指定时间输出的格式</li>
+<li>style<br>
+指定format参数里的占位符，默认是<code>%</code>，可以修改为其它</li>
+<li>level<br>
+指定日志的输出级别，之后只能输出日志级别比它好的级别日志，日志级别详细见后。</li>
+</ol>
+<h2 id="日志级别">日志级别</h2>
+<p>这里的日志级别和网络设备的7个级别还不一样，<code>debug</code>不是最高级别，相反级别还很低，同时级别拥有优先级数值。<br>
+| level | 数值（优先级）|<br>
+|CRITICAL | 50 |<br>
+|FATAL | 50 |<br>
+| ERROR | 40 |<br>
+|WARNING | 30 |<br>
+|INFO | 20|<br>
+|DEBUG | 10 |<br>
+| NOTEST | 0 |</p>
+<p>可以看到很多熟悉的日志级别，只是优先级和之前网络设备的1-7级不一样，在basicConfig指定对应级别之后，只会输出优先级大于等于<br>
+该级别的日志。</p>
+<pre><code class="language-python">import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level = logging.DEBUG)
+
+logger.info('this is a log info')
+logger.debug('this debug info will not be show')
+logger.warning('warning info')
+logger.info('finish')
+</code></pre>
+<p>通过<code>getLogger</code>实例化一个对象 <code>logger</code>之后，设置日志等级为<code>DEBUG</code>，这样就可以限制只有日志等级<code>DEBUG</code>之上的才会输出。</p>
+<h2 id="handler">handler</h2>
+<p>用法：</p>
+<pre><code class="language-python">import logging
+
+logger = logging.getLogger(__name__)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s') #使用Formatter定义for
+# mat
+handler = logging.FileHandler('output.log') #初始化文件handler
+handler.setFormatter(formatter)              #设置handler的format
+logger.addHandler(handler)                   #将handler添加到logger
+
+logger.info('this is a log info')
+</code></pre>
+<p>将<code>basicConfig</code>的参数拆分开。<br>
+使用<code>Formatter</code>实例化<code>format</code>，使用<code>Filehandler</code>初始化<code>handler</code>，<code>setFormatter</code>给<code>handler</code>设置<code>format</code>，最后使用<br>
+<code>addHandler</code>添加到实例化对象 <code>logger</code> 中 。</p>
+<ul>
+<li>常见的handler</li>
+</ul>
+<ol>
+<li>控制台（stdout）</li>
+</ol>
+<pre><code class="language-python">import logging
+import sys
+
+stream_handler = logging.StreamHandler(sys.stdout)  #控制台handler
+</code></pre>
+<ol start="2">
+<li>文件</li>
+</ol>
+<pre><code class="language-python">import logging
+handler = logging.FileHandler('output.log') #初始化文件handler
+</code></pre>
+<ol start="3">
+<li>http服务器</li>
+</ol>
+<pre><code class="language-python">import logging
+from logging.handlers import  HTTPHandler
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level= logging.DEBUG)
+
+log_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s')
+
+http_handler = HTTPHandler(host='192.168.1.1',url='log/upload',method='POST') #初始化http方式的handler
+
+http_handler.formatter(log_format)
+logger.addHandler(http_handler)
+</code></pre>
+<h2 id="formatter">formatter</h2>
+<p>前面的示例里已经详细地展示了<code>logging.Formatter</code>，<code>.formatter</code>如何使用。先初始化实例，之后通过<code>formatter</code>设置<code>hanlder</code></p>
+<h2 id="捕获traceback">捕获traceback</h2>
+<p>报错时展示详细的traceback信息，便于调试。</p>
+<pre><code class="language-python">import logging
+
+logger.info('follow is traceback')
+try:
+    result = 10/0
+except Exception:
+    logger.error('Faild info',exc_info = True)
+</code></pre>
+<p>设置 <code>exc_info = True</code>,打印调试信息。执行结果如下:<br>
+<code>Traceback (most recent call last): File &quot;C:/Users/Chris/PycharmProjects/scapy/ÿ��һ��python��׼��/logging_module/loggin_learning.py&quot;, line 24, in &lt;module&gt; result = 10/0 ZeroDivisionError: division by zero</code></p>
+<h2 id="格式化输出">格式化输出</h2>
+<p><code>logging</code>本身输出支持字符串格式化，不建议再使用<code>format</code>、<code>f</code>。</p>
+<pre><code class="language-python">import logging
+
+logger.info('Dio\'s stand is %s %s','The','World!')
+</code></pre>
+<p>输出结果:<br>
+<code>2019-10-08 23:47:40,836 - __main__ - INFO - 20 - Dio's stand is The World!</code></p>
+<h2 id="日志过滤">日志过滤</h2>
+<p>日志过滤通过<code>logging.Filter</code>类来实现，其源码不是特别复杂，可以看下：</p>
+<pre><code class="language-python">class Filter(object):
+    def __init__(self, name=''):
+        self.name = name
+        self.nlen = len(name)
+
+    def filter(self, record):
+        if self.nlen == 0:
+            return True
+        elif self.name == record.name:
+            return True
+        elif record.name.find(self.name, 0, self.nlen) != 0:
             return False
+        return (record.name[self.nlen] == &quot;.&quot;)
+</code></pre>
+<ul>
+<li>Filter示例化时传入参数<code>name</code>,字符串类型，将name的长度赋予<code>nlen</code></li>
+<li>定义filter函数，参数<code>record</code>，返回结果为<code>True</code>的话表示通过过滤，会继续显示，而返回结果<code>False</code>表示不通过过滤，不显示。</li>
+</ul>
+<p>总结：<code>filter</code>函数返回<code>True</code>能继续显示，返回<code>False</code>不会再显示。</p>
+<p>示例：</p>
+<pre><code class="language-python">import logging
 
-        self.tn.read_until(b'login:',timeout = 10)
-        self.tn.write(username.encode('ascii')+b'\n')
-
-        time.sleep(1)
-
-        self.tn.read_until(b'Password:',timeout = 10)
-        self.tn.write(password.encode('ascii')+b'\n')
-
-        time.sleep(2)
-
-        login_result = self.tn.read_very_eager().decode('ascii')
-
-        if 'Login failed.' not in login_result:
-            logging.warning(f'{datetime.datetime.now()} {self.host_ip} {username} login success')
+class DIO_filter(logging.Filter):
+    def filter(self,record):
+        try:
+        #try信息将record的filter_task赋值给filter_key，这个filter_task是通过extra = ‘’附加上的。
+            filter_key = record.filter_task
+        except AttributeError:
+        #没有record.filter_task的会被过滤
+            return False
+            
+        if filter_key == 'Dio':
+        #如果存在返回True，不存在返回False
             return True
         else:
-            logging.warning(f'{datetime.datetime.now()} {self.host_ip} {username} login failed')
-            return False
+            retrun False
 
-    def logout(self):
-        self.tn.close()
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DBEUG)
 
-    def adduser_h3c(self,add_username,add_password,type = ['manage','network']):
-        commands = ['sys',
-                    'local-user '+add_username+' class '+type,
-                    'service-type telnet ssh','password simple '+add_password,
-                    ' authorization-attribute user-role level-15'
-                    ]
-        
-        for command in commands:
-            self.tn.write(command.encode('ascii')+b'\n')
-            time.sleep(0.1)
+handler = logging.StreamHandler()
 
-        #执行结果
-        execute_result =self.tn.read_very_eager()
-        if self.login_H3C_SW(username = add_username,password = add_password):
-            logging.warning(f'{add_username} add succces and telnet test success')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s')
+
+#实例DIO-filter
+msg_filter = DIO_filter()
+
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+
+#给logger添加filter
+logger.addFilter(msg_filter)
+
+#给extra用的filter_dict
+filter_dict = {'filter_task':'Dio'}
+
+logger.info('Dio\'s stand is %s %s','The','World!',extra = filter_dict)
+logger.error('this is filter test')
+
+执行结果：
+2019-10-09 23:24:24,386 - __main__ - INFO - 20 - Dio's stand is The World!
+第二条不会显示
+</code></pre>
+<p>但是上面让正常没有<code>extra</code>的直接因为<code>AttributeError</code>全被过滤掉。<br>
+使用<code>getMessage()</code>比较正常点。</p>
+<p><code>getMessage()</code> 源码</p>
+<pre><code class="language-python">def getMessage(self):
+    msg = str(self.msg)
+    if self.args:
+        msg = msg % self.args
+    return msg
+</code></pre>
+<p>返回日志，这样可以判断要过滤的<code>str</code>在不在日志正文中即可。<br>
+写法：</p>
+<pre><code class="language-python">class DIO_Filter(logging.Filter):
+    def filter(self, record):
+        filter_key = record.getMessage()
+
+        if 'Dio' in filter_key:
             return True
+        else:
+            return False
+</code></pre>
+<p>同时如果想过滤，只是不显示含有<code>Dio</code>的，把返回的<code>True</code> <code>False</code>顺序互反即可</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[python 正则表达式-re]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/python-zheng-ze-biao-da-shi/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/python-zheng-ze-biao-da-shi/">
+        </link>
+        <updated>2020-04-13T15:00:48.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="基本符号">基本符号</h2>
+<p>老生常谈的正则表达式，本笔记主要记录<code>python re</code>模块的使用，基本符号在这里记录。</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>^</td>
+<td>指定匹配字符串的行首</td>
+</tr>
+<tr>
+<td>$</td>
+<td>指定匹配字符串的结尾</td>
+</tr>
+<tr>
+<td>*</td>
+<td>表示0个以上的字符</td>
+</tr>
+<tr>
+<td>+</td>
+<td>表示1个以上的字符</td>
+</tr>
+<tr>
+<td>\</td>
+<td>去掉指定字符的特殊含义</td>
+</tr>
+<tr>
+<td>^</td>
+<td>指定行的开始</td>
+</tr>
+<tr>
+<td>$</td>
+<td>指定行的结束</td>
+</tr>
+<tr>
+<td>.</td>
+<td>匹配一个非换行符的字符</td>
+</tr>
+<tr>
+<td>*</td>
+<td>匹配零个或多个先前字符</td>
+</tr>
+<tr>
+<td>[]</td>
+<td>匹配一个指定范围内的字符</td>
+</tr>
+<tr>
+<td>[^]</td>
+<td>匹配一个不在指定范围内的字符</td>
+</tr>
+<tr>
+<td>(..)</td>
+<td>标记匹配字符</td>
+</tr>
+<tr>
+<td>&lt;</td>
+<td>指定单词的开始</td>
+</tr>
+<tr>
+<td>&gt;</td>
+<td>指定单词的结束</td>
+</tr>
+<tr>
+<td>X{m}</td>
+<td>重复字符X,m次  如：'0{5}'匹配包含5个o的行。</td>
+</tr>
+<tr>
+<td>X{m,}</td>
+<td>重复字符X,至少m次  如：'o{5,}'匹配至少有5个o的行。</td>
+</tr>
+<tr>
+<td>X{m,n}</td>
+<td>重复字符X,至少m次，不多于n次  如：'o{5,10}'匹配5--10个o的行。</td>
+</tr>
+<tr>
+<td>W</td>
+<td>匹配文字和数字字符，也就是[A-Za-z0-9]</td>
+</tr>
+<tr>
+<td>b</td>
+<td>单词锁定符</td>
+</tr>
+<tr>
+<td>+</td>
+<td>匹配一个或多个先前的字符</td>
+</tr>
+<tr>
+<td>?</td>
+<td>匹配零个或多个先前的字符</td>
+</tr>
+<tr>
+<td>a</td>
+<td>b</td>
+</tr>
+<tr>
+<td>()</td>
+<td>分组符号</td>
+</tr>
+<tr>
+<td>\w</td>
+<td>匹配字母、数字及下划线</td>
+</tr>
+<tr>
+<td>\W</td>
+<td>匹配不是字母、数字及下划线的字符</td>
+</tr>
+<tr>
+<td>\s</td>
+<td>匹配任意空白字符，等价于[\t\n\r\f]</td>
+</tr>
+<tr>
+<td>\S</td>
+<td>匹配任意非空字符</td>
+</tr>
+<tr>
+<td>\d</td>
+<td>匹配任意数字，等价于[0-9]</td>
+</tr>
+<tr>
+<td>\D</td>
+<td>匹配任意非数字的字符</td>
+</tr>
+<tr>
+<td>\A</td>
+<td>匹配字符串开头</td>
+</tr>
+<tr>
+<td>\Z</td>
+<td>匹配字符串结尾，如果存在换行，只匹配到换行前的结束字符串</td>
+</tr>
+<tr>
+<td>\z</td>
+<td>匹配字符串结尾，如果存在换行，同时还会匹配换行符</td>
+</tr>
+<tr>
+<td>\G</td>
+<td>匹配最后匹配完成的位置</td>
+</tr>
+<tr>
+<td>\n</td>
+<td>匹配一个换行符</td>
+</tr>
+<tr>
+<td>\t</td>
+<td>匹配一个制表符</td>
+</tr>
+</tbody>
+</table>
+<h2 id="macth">macth()</h2>
+<p>顺序匹配第一个匹配正则表达式的内容，并且是从开头进行匹配<code>content</code>。</p>
+<pre><code class="language-python">import re
 
-if __name__ == '__main__':
-    tn_cl = telnetclient('192.168.123.221')
-    if tn_cl.login_H3C_SW('admin','admin'):
-        tn_cl.adduser_h3c('test',type = 'manage',add_password ='test123')
-        tn_cl.logout()
+content = 'Hello 123 4567 World_This is a Regex Demo'
+print(len(content))
+re_result = re.match('^Hello\s\d\d\d\s\d{4}\s|w{10}',content)
+print(re_result)
+print(re_result.group())
+print(re_result.span())
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">41
+&lt;re.Match object; span=(0, 25), match='Hello 123 4567 World_This'&gt;
+Hello 123 4567 World_This
+(0, 25)
+</code></pre>
+<p>其中span()为匹配到的范围，而group()代表匹配到的内容。</p>
+<p>如果只想要匹配结果中的某个内容，可以将正则表达式中参数用()起来，然后使用re_result.group(n)获取，n代表正则表达式第n个()匹<br>
+配中的内容。</p>
+<pre><code class="language-python">import re
 
+content = 'Hello 123 4567 World_This is a Regex Demo'
+re_result = re.match('^Hello\s(\d\d\d)\s\d{4}\s\w{10}',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">123
+</code></pre>
+<h2 id="贪婪与非贪婪">贪婪与非贪婪</h2>
+<p>查看一个使用<code>.*</code>匹配的例子:</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 1234567 World_This is a Regex Demo'
+re_result = re.match('^Hello.*(\d+).*Demo$',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">7
+</code></pre>
+<p>因为<code>.*</code>会尽可能多的匹配，而<code>\d+</code>表示至少一个数组，这样<code>123456</code>都被<code>.*</code>匹配到了，留给<code>\d+</code>的就只有一个<code>7</code>。这叫做贪婪匹配。<br>
+而想要使用非贪婪匹配也很简答，将<code>.*</code>改成<code>.*?</code>即可</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 1234567 World_This is a Regex Demo'
+re_result = re.match('^Hello.*?(\d+).*Demo$',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">1234567
+</code></pre>
+<p>注意，尽量不要将非贪婪匹配用在结尾，因为它表示尽可能少的匹配，所以有可能匹配的就是空字符，不匹配任何内容。</p>
+<h2 id="修饰符">修饰符</h2>
+<p>将<code>content</code>内容修改为换行，再次看下之前例子的匹配结果。</p>
+<pre><code class="language-python">content = '''
+Hello 1234567 World_This is
+          a Regex Demo
+'''
+re_result = re.match('^Hello.*?(\d+).*Demo$',content)
+print(re_result.group(1))
+#执行结果
+AttributeError: 'NoneType' object has no attribute 'group'
+</code></pre>
+<p>直接显示无法匹配，因为默认情况下<code>.</code>匹配的任意字符是不包含换行的，所以想要能够匹配换行的字符，需要加上修饰符<code>re.S</code>，将代<br>
+码修改如下：</p>
+<pre><code class="language-python">import re
+
+content = '''Hello 1234567 World_This is
+          a Regex Demo
+'''
+re_result = re.match('^Hello.*?(\d+).*Demo$',content,re.S)
+print(re_result.group(1))
+#执行结果
+1234567
+</code></pre>
+<p>常用修饰符：</p>
+<table>
+<thead>
+<tr>
+<th>修饰符</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>re.I</td>
+<td>忽略大小写</td>
+</tr>
+<tr>
+<td>re.L</td>
+<td>本地化识别</td>
+</tr>
+<tr>
+<td>re.M</td>
+<td>多行匹配，影响<code>^</code>和<code>&amp;</code>效果</td>
+</tr>
+<tr>
+<td>re.S</td>
+<td>让<code>.</code>匹配包括换行在内的所有字符</td>
+</tr>
+<tr>
+<td>re.U</td>
+<td>根据unicode字符集解析字符，影响<code>\w</code> <code>\W</code> <code>\b</code> <code>\B</code></td>
+</tr>
+</tbody>
+</table>
+<p>匹配网页时，<code>re.S</code> <code>re.I</code> 比较常用。</p>
+<h3 id="转义字符">转义字符</h3>
+<p>使用<code>\</code>进行匹配和参数内容一致的内容。</p>
+<h2 id="search">search()</h2>
+<p><code>match()</code>只能从开头进行匹配，无法匹配正文内容中非开头的字段，所以实际使用<code>search()</code>更多。<br>
+<code>search()</code>同样也是返回第一个匹配到的内容，而不是所有，匹配所有符合条件的使用<code>findall</code>。</p>
+<p><code>search()</code>实际使用示例：</p>
+<pre><code class="language-python">import re
+
+html = '''&lt;div id=&quot;songs-list&quot;&gt;
+    &lt;h2 class=&quot;title&quot;&gt;经典老歌&lt;/h2&gt;
+    &lt;p class=&quot;introduction&quot;&gt;
+        经典老歌列表
+    &lt;/p&gt;
+    &lt;ul id=&quot;list&quot; class=&quot;list-group&quot;&gt;
+        &lt;li data-view=&quot;2&quot;&gt;一路上有你&lt;/li&gt;
+        &lt;li data-view=&quot;7&quot;&gt;
+            &lt;a href=&quot;/2.mp3&quot; singer=&quot;任贤齐&quot;&gt;沧海一声笑&lt;/a&gt;
+        &lt;/li&gt;
+        &lt;li data-view=&quot;4&quot; class=&quot;active&quot;&gt;
+            &lt;a href=&quot;/3.mp3&quot; singer=&quot;齐秦&quot;&gt;往事随风&lt;/a&gt;
+        &lt;/li&gt;
+        &lt;li data-view=&quot;6&quot;&gt;&lt;a href=&quot;/4.mp3&quot; singer=&quot;beyond&quot;&gt;光辉岁月&lt;/a&gt;&lt;/li&gt;
+        &lt;li data-view=&quot;5&quot;&gt;&lt;a href=&quot;/5.mp3&quot; singer=&quot;陈慧琳&quot;&gt;记事本&lt;/a&gt;&lt;/li&gt;
+        &lt;li data-view=&quot;5&quot;&gt;
+            &lt;a href=&quot;/6.mp3&quot; singer=&quot;邓丽君&quot;&gt;&lt;i class=&quot;fa fa-user&quot;&gt;&lt;/i&gt;但愿人长久&lt;/a&gt;
+        &lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/div&gt;'''
+
+res = re.search('&lt;li.*?class=&quot;active&quot;.*?singer=&quot;(.*?)&quot;&gt;(.*?)&lt;/a&gt;',html,re.S)
+if res:
+    print(res.group(1),res.group(2))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">齐秦 往事随风
+</code></pre>
+<h2 id="findall">findall()</h2>
+<p>匹配所有一般使用<code>findall()</code>,还是上面的<code>html</code>，匹配所有的歌手和歌名，修改下匹配的表达式，使用<code>findall</code></p>
+<pre><code class="language-python">import  re
+
+res = re.findall('&lt;li.*?href=&quot;(.*?)&quot;.*?singer=&quot;(.*?)&quot;&gt;(.*?)&lt;/a&gt;',html,re.S)
+for r in res:
+    print(r[0],r[1],r[2])
+</code></pre>
+<h2 id="sub">sub()</h2>
+<p>替换匹配的结果。</p>
+<pre><code class="language-python">str1 = '123ABC456'
+replace = re.sub('[a-z|A-Z]','',str1)
+print(replace)
+执行结果：
+123456
+</code></pre>
+<p>还是上面的文本，使用sub去除<code>&lt;a&gt;</code>标签，直接匹配去除<code>&lt;a&gt;</code>之后的<code>&lt;li&gt;</code>标签。</p>
+<pre><code class="language-python">import re
+
+new_html = re.sub('&lt;a.*?&gt;|&lt;/a&gt;','',html)    #匹配&lt;a&gt;标签，替换为空
+results = re.findall('&lt;li.*?&gt;(.*?)&lt;/li&gt;',new_html,re.S)
+for result in results:
+     print(result.strip())
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">一路上有你
+沧海一声笑
+往事随风
+光辉岁月
+记事本
+</code></pre>
+<h2 id="compile">compile()</h2>
+<p>将常用的正则表达式转换成变量，方便后续调用,同时可以传入修饰符。</p>
+<pre><code class="language-python">import re
+
+pattern = re.compile('[a-z]',re.I)     #使用[a-z]匹配小写字母，同时传入了修饰符re.S.
+print(re.findall(pattern,'123ABCabc'))
+</code></pre>
+<p>执行结果：<br>
+<code>['A', 'B', 'C', 'a', 'b', 'c']</code></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[python mongoDB]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/python-mongodb/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/python-mongodb/">
+        </link>
+        <updated>2020-04-13T15:00:03.000Z</updated>
+        <content type="html"><![CDATA[<h4 id="连接数据库">连接数据库</h4>
+<pre><code class="language-python">mongodb_client = pymongo.MongoClient(host = 'localhost',port = 27017)
+</code></pre>
+<p>除了此方法之外还可以通过mongoDB的标准字符串连接方式连接</p>
+<pre><code class="language-python">MongoClient('mongodb://[username:password@]host1[:port1]')
+</code></pre>
+<h4 id="指定数据库">指定数据库</h4>
+<pre><code class="language-python">mongo_db = mongodb_client.python
+</code></pre>
+<h4 id="指定collection">指定collection</h4>
+<pre><code class="language-python">mongo_colleciton = mongo_db.spider_taobao
+</code></pre>
+<ol>
+<li></li>
+</ol>
+<p>对document的操作基本和<code>mongoDB</code>语法没多大区别，但还是有一些不一样的地方，看下mongoDB源码基本就能大概了解。</p>
+<h4 id="document的操作">document的操作</h4>
+<h5 id="查找数据">查找数据</h5>
+<ul>
+<li>显示所有数据,通过查询方法find()实现，返回结果是一个生成器，需要通过<code>for</code>读取。</li>
+</ul>
+<pre><code class="language-python">import mongoDB
+def find_all():
+    find_res = mongo_colleciton.find({})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+<ul>
+<li>
+<p>使用find()查找数据</p>
+<p>查询特定的数据，普通查询方式,这里注意，有和直接mongoDB语法不一样的地方，条件操作符需要加上'':</p>
+<pre><code class="language-python">def find_exact():
+    find_res = mongo_colleciton.find({'1':{'$gte':15,'$lte':21}})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+</li>
+<li>
+<p>find_one()</p>
+<p>用find查询返回的结果是一个生成器，如果使用find_one()、find_many()进行查询，返回的直接就是结果</p>
+<pre><code class="language-python">def find_one(key,value):
+    find_res = mongo_colleciton.find_one({key:value})
+    print(find_res)
+    
+find_one('k1','v1')
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">{'_id': ObjectId('5db3f632cae991fc6731cd0a'), 'k1': 'v1'}
+</code></pre>
+<p>可以看到查询结果可以直接用print(）打印出来</p>
+</li>
+<li>
+<p>通过‘_id’查询数据</p>
+<p>引入BSON构建<code>ObjectID</code>进行查询。</p>
+<pre><code class="language-python">def find_by_id():
+      from bson.objectid import ObjectId
+      res = mongo_colleciton.find_one({'_id':ObjectId('5db3fc8fdf97b1835f085bbd')})
+      print(res)
+
+  find_by_id()
+
+执行结果：
+{'_id': ObjectId('5db3fc8fdf97b1835f085bbd'), '1': 1}
+</code></pre>
+</li>
+</ul>
+<h5 id="删除数据">删除数据</h5>
+<p>remove的语法一致，deleteOne和deleteMany变成delete_one、delete_many。</p>
+<pre><code class="language-python">def remove():
+    mongo_colleciton.insert({'k1':'v1'})
+    mongo_colleciton.insert({'k2':'v2'})
+    mongo_colleciton.remove({'k1':'v1'})
+    mongo_colleciton.delete_one({'k2':'v2'})
+    print(mongo_colleciton.find({'k1':'v1'}))
+</code></pre>
+<h5 id="更新数据">更新数据</h5>
+<p>同样地$set限定符也需要加上‘’，推荐使用update_one、update_many，而不是update</p>
+<pre><code class="language-python">def update_():
+    mongo_colleciton.update_one({'age':22},{'$set':{'age':23}})
+    find_res = mongo_colleciton.find({'name':'Jordan'})
+    for find_re in find_res:
+        print(find_re)
+</code></pre>
+<h5 id="插入数据">插入数据</h5>
+<p>推荐使用insert_one()、insert_many()。</p>
+<h6 id="插入一个数据">插入一个数据</h6>
+<pre><code class="language-python">def insert_one(key,value):
+    insert_res = mongo_colleciton.insert_one({key:value})
+</code></pre>
+<h6 id="插入多个数据">插入多个数据</h6>
+<p>insert_many() return的值当中有一个inserted_ids，是一个list，源码部分查看    inserted_ids.append(document[&quot;_id&quot;])。</p>
+<p>其中insert_many()插入的值为iterable。</p>
+<pre><code class="language-python">def insert_many():
+    #使用列表生成器，生成一个list，其中每一项数据都必须符合{}的形式
+    print(mongo_colleciton.count_documents({}))
+    mongo_colleciton.insert_many([{'k'+str(i):'v'+str(j)} for i in range(2,4) for j in range(2,4)])
+    print(mongo_colleciton.count_documents({}))
+    res = mongo_colleciton.insert_many([{'1':1},{'2':2}])
+    print(res.inserted_ids)
+    
+insert_many()
+</code></pre>
+<p>执行结果：<br>
+执行结果，通过count_documents({})函数可以看出来一共插入了4个值。<br>
+同时，inserted_dis可以正常显示出已经插入的值id。</p>
+<pre><code class="language-python">[ObjectId('5db3fc8fdf97b1835f085bbd'),ObjectId('5db3fc8fdf97b1835f085bbe')]
 </code></pre>
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Hello Gridea]]></title>
-        <id>https://behemothes.github.io/Behemothes/post/hello-gridea/</id>
-        <link href="https://behemothes.github.io/Behemothes/post/hello-gridea/">
+        <title type="html"><![CDATA[mongoDB]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/mongodb/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/mongodb/">
         </link>
-        <updated>2018-12-11T16:00:00.000Z</updated>
-        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
-<!-- more -->
-<p><a href="https://github.com/getgridea/gridea">Github</a><br>
-<a href="https://gridea.dev/">Gridea 主页</a><br>
-<a href="http://fehey.com/">示例网站</a></p>
-<h2 id="特性">特性👇</h2>
-<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
-<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
-<p>🏷️  你可以对文章进行标签分组</p>
-<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
-<p>💻  你可以在 <strong>Windows</strong>，<strong>MacOS</strong> 或 <strong>Linux</strong> 设备上使用此客户端</p>
-<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
-<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
-<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
-<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
-<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
-<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前 🏃</p>
-<p>未来，它一定会成为你离不开的伙伴</p>
-<p>尽情发挥你的才华吧！</p>
-<p>😘 Enjoy~</p>
+        <updated>2020-04-13T14:58:10.000Z</updated>
+        <content type="html"><![CDATA[<h4 id="基本概念">基本概念</h4>
+<ul>
+<li>
+<p>database</p>
+<p>数据库，基本概念，可以存在多个库，不指定使用的库，默认使用 <code>test</code>。</p>
+</li>
+<li>
+<p>collection</p>
+<p>类似mysql table的概念，一个database类可以存在多个collection。</p>
+</li>
+<li>
+<p>document</p>
+<p>类似mysql row概念，数据记录行 文档</p>
+</li>
+<li>
+<p>field</p>
+<p>数据字段</p>
+</li>
+<li>
+<p>index</p>
+<p>索引，mongoDB的id自动生成。</p>
+</li>
+</ul>
+<h4 id="启动mongodb">启动mongoDB</h4>
+<p>将安装路径的 <code>bin</code>加入到环境变量之中，之后直接</p>
+<pre><code class="language-mysql">mongod --dbpath=D:\data\db
+</code></pre>
+<p>其中  <code>--dbpath</code>参数制定了数据库的位置。</p>
+<h4 id="连接到mongodb">连接到mongoDB</h4>
+<ul>
+<li>
+<p>本地连接</p>
+<p>在<code>bin</code>路径下还存在着一个名为<code>mongo</code>的程序，直接<code>mongo</code>就可以连接到本地的数据库。默认端口号<code>27017</code>。</p>
+</li>
+<li>
+<p>网络连接</p>
+<p>标准URI语法：</p>
+<pre><code class="language-mysql">mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+</code></pre>
+</li>
+</ul>
+<h4 id="数据库相关语法">数据库相关语法</h4>
+<ul>
+<li>
+<p>创建数据库</p>
+<p>语法如下</p>
+<pre><code class="language-mysql">use database_name
+</code></pre>
+<p>该语法为切换使用的数据库，如果数据库不存在，会创建数据库。</p>
+</li>
+<li>
+<p>查看当前使用的数据库</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db
+test
+MongoDB Enterprise &gt; use python
+switched to db python
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt; db
+python
+MongoDB Enterprise &gt;
+</code></pre>
+<p>可以看到，在不指定数据库的情况下，默认的数据库就是<code>test</code>,这里的数据库<code>python</code>之前已经创建过，所以可以看到没有再创建的过程。</p>
+</li>
+<li>
+<p>切换数据库</p>
+<p>前面说到，<code>use</code> 就是切换数据库。</p>
+</li>
+<li>
+<p>查看所有数据库</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+</code></pre>
+</li>
+<li>
+<p>删库</p>
+<p><code>db.dropDatabase()</code></p>
+<p>示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+delete  0.000GB
+local   0.000GB
+python  0.000GB
+MongoDB Enterprise &gt; use delete
+switched to db delete
+MongoDB Enterprise &gt; db.dropDatabase()
+{ &quot;dropped&quot; : &quot;delete&quot;, &quot;ok&quot; : 1 }
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+</code></pre>
+<p>可以看到 <code>delete</code>库已经被删除。</p>
+</li>
+<li>
+<p>tips</p>
+<p>数据库创建完立马 <code>show dbs</code>可能会看不到数据库，因为此时并没有 <code>collection</code>在内，此时需要创建 <code>collection</code>并插入数据。</p>
+</li>
+</ul>
+<h4 id="collection相关语法">collection相关语法</h4>
+<ul>
+<li>
+<p>创建collection</p>
+<pre><code class="language-sql">db.creatCollection('d1')
+</code></pre>
+<p>切换到对应的库后，创建一个新的 <code>collection</code></p>
+</li>
+<li>
+<p>查看collection</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show collections
+python
+spider_taobao
+</code></pre>
+</li>
+<li>
+<p>collection的自动创建</p>
+<p>前面提到创建数据库之后不会立马看到数据库，需要插入数据，插入的方法如下：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; use new
+switched to db new
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt; db.new.insert({'title':'v1'})
+WriteResult({ &quot;nInserted&quot; : 1 })
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+new     0.000GB
+python  0.000GB
+MongoDB Enterprise &gt; show collections
+new
+</code></pre>
+<p>可以看到创建了一个新的数据库 <code>new</code>，此时查看看不到新创建的数据库，插入一个新的数据到<code>new</code>中，此时再查看  <code>show dbs</code>可以看到已经可以看到的新的数据库 <code>new</code>，同时 <code>show collections</code>可以看到新的<code>collection</code>  <code>new</code>。</p>
+</li>
+<li>
+<p>删除collection</p>
+<p>语法：</p>
+<p><code>db.collection_name.drop()</code></p>
+<p>示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.new.drop()
+true
+</code></pre>
+</li>
+</ul>
+<h4 id="文档相关语法">文档相关语法</h4>
+<h5 id="插入文档">插入文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection_name.insert({})
+db.getColleciton('collection_name').insert({})
+db.getColleciton('collection_name').insertOne({})
+db.getCollection('collection_name').insertMany({})
+</code></pre>
+<p>示例：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').insert({'k1':'v1'})
+</code></pre>
+<h5 id="文档的_id">文档的_id</h5>
+<p><code>mongoDB</code>中存在类似<code>mysql</code>唯一主键的ID。默认情况下这个id是自动生成的<code>objectID</code>对象。</p>
+<figure data-type="image" tabindex="1"><img src="C:%5CUsers%5CChris%5CDesktop%5Cid.png" alt="objectID" loading="lazy"></figure>
+<p>该 <code>id</code>组成如下：</p>
+<ol>
+<li>前4个字节代表<strong>unix</strong>时间戳，<strong>UTC</strong>时间，比北京时间晚<strong>8</strong>小时。</li>
+<li>3个字节机器码</li>
+<li>2字节进程<code>PID</code></li>
+<li>最后3个字节，随机数</li>
+</ol>
+<h5 id="save方法"><code>save()</code>方法</h5>
+<p>前面说到唯一主键 <code>_id</code>，<code>save</code>方法可以指定唯一主键，但是如果不指定和<code>insert()</code>效果一样，都是插入新的数据，如果指定了<code>_id</code>字段，则是更新数据。</p>
+<h5 id="更新文档">更新文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection.update(
+   &lt;query&gt;,
+   &lt;update&gt;,
+   {
+     upsert: &lt;boolean&gt;,
+     multi: &lt;boolean&gt;,
+     writeConcern: &lt;document&gt;
+   }
+)
+</code></pre>
+<ul>
+<li>
+<p><query>为查询的条件，可以为其中的某一个值（具体值=，小于、等于，mysql支持的查询，同样都支持）。</p>
+</li>
+<li>
+<p><code>&lt;update&gt;</code>为数据更新的内容。如果不指定更新数据的具体范围，就会对整个符合条件的文档内容修改，示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'1'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30f549a8f6fcee18b6734&quot;), &quot;1&quot; : &quot;1&quot;, &quot;2&quot; : &quot;2&quot; }
+</code></pre>
+<p>查找含有{‘1':'1'}的文档，查看里面内容，还有另外一对值，如果使用以下语法进行<code>update</code>，结果如下：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').update({'1':'1'},{'1':'11'})
+Updated 1 existing record(s) in 2ms
+
+db.getCollection('spider_taobao').find({'1':'11'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30f549a8f6fcee18b6734&quot;), &quot;1&quot; : &quot;11&quot; }
+</code></pre>
+<p>查看更新完的数值，整个document被修改掉了，如果只是想<strong>update</strong>匹配到的数据，应该使用$set在更新的数据前。</p>
+</li>
+<li>
+<p><code>upsert</code>：false or true，如果查找的数据不存在，是否插入新的值。默认该值为false</p>
+</li>
+<li>
+<p><code>multi</code>：替换查找到的第一个值还是多个值，默认该值也是false，即，只更新查找到的第一个值。</p>
+<h5 id="使用set指定更新的文档内容">使用$set指定更新的文档内容</h5>
+<p>直接查看示例</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'10'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30ef69a8f6fcee18b6733&quot;), &quot;1&quot; : &quot;10&quot;, &quot;2&quot; : &quot;2&quot; }
+
+db.getCollection('spider_taobao').update({'1':'10'},{$set:{'1':'20'}},{multi:true})
+
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'20'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30ef69a8f6fcee18b6733&quot;), &quot;1&quot; : &quot;20&quot;, &quot;2&quot; : &quot;2&quot; }
+</code></pre>
+<p>可以看到只有被$set匹配的数据部分内容被修改。</p>
+<p>格式</p>
+<pre><code class="language-mysql">update({query},{$set{update}},{multi:ture})
+</code></pre>
+</li>
+</ul>
+<h5 id="删除文档">删除文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection_name.remove(&lt;query&gt;,&lt;justone&gt;)
+</code></pre>
+<p><justone>:是否只删除一个参数，默认为false，代表默认删除所有匹配到的数据。</p>
+<p>示例：</p>
+<pre><code>db.getCollection('spider_taobao').remove({'1':{$gte:10,$lte:15}})
+</code></pre>
+<p>删除'1'，范围大于等于10，小于等于15的<strong>document</strong>。</p>
+<p>推荐的语法：</p>
+<pre><code>db.collection_name.deleteOne()
+
+db.collection_name.deleteMany()
+</code></pre>
+<p>示例：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').insertOne({'1':21})   #插入一个新的数据
+
+此时存在两条数据：
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':{$gt:9}}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db317b67fb04e83dc59f7f8&quot;), &quot;1&quot; : 20 }
+{ &quot;_id&quot; : ObjectId(&quot;5db317e69a8f6fcee18b6735&quot;), &quot;1&quot; : 21 }
+
+删除：
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').deleteMany({'1':{$gte:20}})
+{ &quot;acknowledged&quot; : true, &quot;deletedCount&quot; : 2 }
+</code></pre>
+<p>可以看到成功删除两条document</p>
+<h5 id="查询文档">查询文档</h5>
+<h6 id="and查询">and查询</h6>
+<pre><code>db.getCollection('spider_taobao').find({'1':20,'2':21})
+</code></pre>
+<p>分隔号分隔开，此时就是常规的<strong>AND</strong>查询</p>
+<p>示例：</p>
+<pre><code>MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':20,'1':'21'})
+{ &quot;_id&quot; : ObjectId(&quot;5db31a3c1e2499fa1cc08fd8&quot;), &quot;1&quot; : &quot;21&quot; }
+</code></pre>
+<h6 id="or查询">or查询</h6>
+<p>语法：</p>
+<pre><code class="language-mysql">&gt;db.col.find(
+   {
+      $or: [
+         {key1: value1}, {key2:value2}
+      ]
+   }
+).pretty()
+</code></pre>
+<p>使用 <code>or[{}，{}]</code>的形式。</p>
+<p>示例：</p>
+<pre><code>MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({$or:[{'1':'21'},{'1':20
+...     }]})
+{ &quot;_id&quot; : ObjectId(&quot;5db31a3c1e2499fa1cc08fd8&quot;), &quot;1&quot; : &quot;21&quot; }
+{ &quot;_id&quot; : ObjectId(&quot;5db31b369a8f6fcee18b6736&quot;), &quot;1&quot; : 20 }
+</code></pre>
+<p>查询所有：</p>
+<pre><code>db.col.find({}).pretty()
+</code></pre>
+<h5 id="条件操作符">条件操作符</h5>
+<p><code>mongoDB</code>同样支持常见的文件操作符。</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$gt</td>
+<td>大于</td>
+</tr>
+<tr>
+<td>$lt</td>
+<td>小于</td>
+</tr>
+<tr>
+<td>$gte</td>
+<td>大于等于</td>
+</tr>
+<tr>
+<td>$lte</td>
+<td>小于等于</td>
+</tr>
+</tbody>
+</table>
+<h5 id="统计">统计</h5>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').find({}).count()
+</code></pre>
+<p>统计多少个</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Tshark、pyshark学习笔记]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/tsharkpyshark-xue-xi-bi-ji/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/tsharkpyshark-xue-xi-bi-ji/">
+        </link>
+        <updated>2020-04-13T14:55:37.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="pyshark">pyshark</h3>
+<h4 id="抓取报文">抓取报文</h4>
+<p>创建一个函数进行抓包，返回一个对象,设置过滤条件，存在两种过滤，一种是抓包时的过滤条件，使用<code>tcpdump</code>的过滤方式进行过滤，还有就是<code>wireshark</code>的过滤，常见的<code>param</code>可以查看<code>livecapture</code>源文件</p>
+<pre><code class="language-python">import pyshark
+
+def get_liv_ecap(display_filter_name = '',tcpdump_filter_name = '',wfile=''):
+    cap  = pyshark.LiveCapture(interface = 'WLAN',
+                               bpf_filter= tcpdump_filter_name,
+                               display_filter= display_filter_name,
+                               output_file=r'.\\'+wfile
+    )
+    return cap
+</code></pre>
+<p><code>livecapture</code> 的<code>param</code>:</p>
+<pre><code class="language-powershell">    :param interface: Name of the interface to sniff on or a list of names (str). If not given, runs on all interfaces.
+    :param bpf_filter: BPF filter to use on packets.
+    :param display_filter: Display (wireshark) filter to use.
+    :param only_summaries: Only produce packet summaries, much faster but includes very little information
+    :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
+    :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
+    'WPA-PWK'. Defaults to WPA-PWK).
+    :param output_file: Additionally save live captured packets to this file.
+    :param decode_as: A dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
+    to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
+    it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
+    :param tshark_path: Path of the tshark binary
+    :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+    :param capture_filter: Capture (wireshark) filter to use.
+    :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+    :param use_json: Uses tshark in JSON mode (EXPERIMENTAL). It is a good deal faster than XML
+    but also has less information. Available from Wireshark 2.2.0.
+    :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {&quot;--param&quot;: &quot;value&quot;}
+</code></pre>
+<h4 id="查看报文内容">查看报文内容</h4>
+<p>打印数据包内容,对于实时抓取的数据包可以使用<code>sniff_continuously</code>设置抓取的数目，<code>for</code>循环获取数据包：</p>
+<pre><code class="language-python">def show_packet():
+    cap = get_liv_ecap(display_filter_name='http',tcpdump_filter_name='tcp port 80',wfile='test.pcap')
+    for packet in cap.sniff_continuously(packet_count= 10 ):
+        print(packet)
+</code></pre>
+<h4 id="读取报文">读取报文</h4>
+<pre><code class="language-python">def readpacket(file = ''):
+    cap = pyshark.FileCapture(file)
+    return cap
+</code></pre>
+<h4 id="报文内容解析">报文内容解析</h4>
+<p>查看报文内容,报文中有哪些字段可以解析，可以在console模式下直接查看，值的内容是str还是dict，都可以直接看到</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/image-20191031005003706.png" alt="image-20191031005003706" loading="lazy"></figure>
+<pre><code class="language-python">def packet_content():
+    i = 0
+    packets= readpacket(r'.\test.pcap')
+    for packet in packets:
+        print(f'packet { i } information:')
+        print(f'eth src add is {packet.eth.layer_name}')
+        print(f'ip src add is {packet.ip.src}')
+        print(f'transport layer is {packet.layers[2]._layer_name}')
+        print(f'application layer name is {packet.layers[3]._layer_name}')
+        print('-' *  50)
+        i += 1
+</code></pre>
+<h4 id="apply_on_packet函数">apply_on_packet函数</h4>
+<p><code>apply_on_packets</code>函数，接受一个函数，并将这个函数用到所有数据包</p>
+<pre><code class="language-python">def get_packet_count():
+    cap =readpacket(r'.\test.pcap')
+    count = []
+    def counter(*args):
+        count.append(args[0])
+
+cap.apply_on_packets(counter)
+
+return len(count)
+
+if __name__ == '__main__':
+    print(get_packet_count())
+</code></pre>
+<h3 id="tshark">Tshark</h3>
+<h4 id="常用参数说明">常用参数说明</h4>
+<h5 id="抓取">抓取</h5>
+<pre><code class="language-shell">  -i &lt;interface&gt;           接口名或网卡编号 (默认: 第一个非环回接口)
+  -f &lt;capture filter&gt;      使用libpcap过滤表达式进行包过滤
+  -s &lt;snaplen&gt;             设置每个抓包的大小，默认为65535。
+                          （相当于tcpdump的-s，tcpdump默认抓包的大小仅为68）
+  -p                       不使用混杂模式抓捕报文（即只抓取与本机有关的流量）
+  -I                       如果支持则启用镜像模式
+  -B &lt;buffer size&gt;         内核缓存大小 (默认2MB)
+  -y &lt;link type&gt;           链路层类型 (默认为找到的第一个协议)
+  --time-stamp-type &lt;type&gt; 接口时间戳类型
+  -D                       列出所有接口并退出
+  -L                       列出所有接口链路层类型并退出（供-y参数使用）
+  --list-time-stamp-types  列出所有接口时间戳类型并退出（供--time-stamp参数使用）
+</code></pre>
+<h5 id="捕获终止条件">捕获终止条件</h5>
+<pre><code class="language-shell">  -c &lt;packet count&gt;        捕获到n个包时停止 (默认不限，持续捕获)
+  -a &lt;autostop cond.&gt; ...  duration:NUM - 捕获进行NUM后停止
+                           filesize:NUM - 输出文件大于NUM KB后停止
+                              files:NUM - 输出超过NUM个文件后停止
+</code></pre>
+<h5 id="捕获输出">捕获输出</h5>
+<pre><code class="language-shell">  -b &lt;ringbuffer opt.&gt; ... duration:NUM - 在NUM秒后写入下一个文件（文件名由-w参数决定）
+                           interval:NUM - create time intervals of NUM secs
+                           filesize:NUM - 在文件大于NUM KB后写入下一个文件
+                              files:NUM - 循环缓存: 在NUM个文件后替换早前的
+</code></pre>
+<h5 id="读取文件">读取文件</h5>
+<pre><code class="language-shell">-r &lt;infile|-&gt; 设置需要读取的文件名及路径(或'-'表示标准输入，从终端输入)
+</code></pre>
+<h5 id="分析处理">分析处理</h5>
+<pre><code class="language-shell">  -2                       执行two-pass分析
+  -M &lt;packet count&gt;        执行会话自动重置
+  -R &lt;read filter&gt;         包读取过滤使用wireshark显示过滤表达式(配合-2参数)
+  -Y &lt;display filter&gt;      包显示过滤使用wireshark显示过滤表达式
+  -n                       不进行名称解析 (def: all enabled)
+  -N &lt;name resolve flags&gt;  启用指定的地址名字解析: &quot;mnNtdv&quot;
+                           (“m”代表MAC层，“n”代表网络层，“t”代表传输层，“N”代表当前异步DNS查找。)
+  -d &lt;layer_type&gt;==&lt;selector&gt;,&lt;decode_as_protocol&gt; ...
+                           &quot;解析为&quot;,详见man帮助页面。例: tcp.port==8888,http
+                           （注意选择子和解包协议之间不能留空格）
+  -H &lt;hosts file&gt;          读取主机列表文件，将被写入捕获的文件(Implies -W n)
+  --enable-protocol &lt;proto_name&gt;
+                           启用协议报文解析
+  --disable-protocol &lt;proto_name&gt;
+                           不对指定协议报文解析
+  --enable-heuristic &lt;short_name&gt;
+                           启用协议报文启发式解析
+  --disable-heuristic &lt;short_name&gt;
+                           不对指定协议报文启发式解析
+</code></pre>
+<h5 id="输出">输出</h5>
+<pre><code class="language-shell">  -w &lt;outfile|-&gt;           使用pcapng格式将报文写入&quot;outfile&quot;文件
+                           (或'-'表示标准输出，直接显示在终端)
+  -C &lt;config profile&gt;      启动时使用指定的配置文件
+  -F &lt;output file type&gt;    设置输出文件格式类型, 默认为pcapng格式
+                           &quot;-F&quot;留空则列出所有的文件类型
+  -V                       输出中增加报文层次树(包详细信息)
+  -O &lt;protocols&gt;           仅显示以下协议的详细信息，逗号分割
+  -P                       每写入一个文件后进行包情况汇总
+  -S &lt;separator&gt;           数据包之间的行分割符
+  -x                       输出中增加16进制和ascii字符信息(报文按字节显示)
+  -T pdml|ps|psml|json|jsonraw|ek|tabs|text|fields|?
+                           文本输出格式 (默认文本:text)
+  -j &lt;protocolfilter&gt;      当-T ek|pdml|json 设置时协议层过滤
+                           (例：&quot;ip ip.flags text&quot;, 过滤不展开的所有字节点，除非过滤中有指定的子节点）
+  -J &lt;protocolfilter&gt;      当 -T ek|pdml|json 选项设置时进行顶层协议过滤，
+                           (例: &quot;http tcp&quot;, 过滤展开的所有字节点）
+  -e &lt;field&gt;               当 -T fields 设置时打印字段 (如tcp.port,_ws.col.Info)
+                           此选项可以多个用于打印多个字段
+  -E&lt;fieldsoption&gt;=&lt;value&gt; 当-Tfields选项启用时用于输出配置:
+     bom=y|n               打印UTF-8 BOM
+     header=y|n            选择首行是否输出字段名（类似表头）
+     separator=/t|/s|&lt;char&gt; 选择字段采用tab、空格、指定可打印字符为分割符
+     occurrence=f|l|a      打印第一个、最后一个或全部出现的数值（默认全部）
+     aggregator=,|/s|&lt;char&gt; 选择字段采用逗号、空格、指定可打印字符聚合字段
+     quote=d|s|n           选择对数值采用双引号、单引号、不用引号
+  -t a|ad|d|dd|e|r|u|ud|?  输出格式化的时间戳(默认r: rel. 优先)
+  -u s|hms                 输出格式化秒(默认s:秒)
+  -l                       每个包之后就刷新标准输出
+  -q                       向终端输出少量信息 (e.g. 当使用统计)
+  -Q                       仅向stderr输出确切错误信息(比-q信息更少)
+  -g                       启用组用户读取输出文件
+  -W n                     如果支持，保存额外信息到文件中
+                           n = 写入网络地址解析信息
+  -X &lt;key&gt;:&lt;value&gt;         扩展选项，详见man页面
+  -U tap_name              PDUs专家模式, 详见man帮助页面
+  -z &lt;statistics&gt;          大量统计,详见man帮助页面
+  --capture-comment &lt;comment&gt;
+                           在最新创建的输出文件中增加捕获注释(仅支持pcapng格式)
+  --export-objects &lt;protocol&gt;,&lt;destdir&gt; 保存指定导出协议对象到指定目录                           
+  --color                  在输出的文本格式中支持类似Wireshark图形界面的色彩,终端需要支持24位彩色
+                           同时支持pdml、psml的色彩属性（注：这两张属性非标准）                         
+  --no-duplicate-keys      如果-T json设置, 合并重复键，将多个值归并在一个键下的数组中
+  --elastic-mapping-filter &lt;protocols&gt; 如果指定-G elastic-mapping,设置仅mapping文件中指定的协议
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[两个DHCP有趣的问题]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/liang-ge-dhcp-you-qu-de-wen-ti/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/liang-ge-dhcp-you-qu-de-wen-ti/">
+        </link>
+        <updated>2020-04-13T14:46:41.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="前言">前言</h3>
+<p>这两个问题都是很久之前处理的问题，但直到现在我依旧觉得很有趣，问题本身很有趣，解决问题的过程也非常有趣，让我印象深刻，不管是技术来说还是其他的，总之，都是非常有趣。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200412231640.png" alt="P1" loading="lazy"></figure>
+<h3 id="第一个问题">第一个问题</h3>
+<p>第一个问题和DHCP Option 82有关，下面先来看一丢丢关于DHCP Option 82的基础知识。</p>
+<h4 id="dhcp-option-82">DHCP Option 82</h4>
+<p>DHCP Option 82全称为Relay Agent Information Option，从名字里就可以看出来和DHCP Relay相关，简单来说：DHCP Relay设备将客户端的DHCP报文三层转发给DHCP服务器时可以通过该Option携带一些信息用户标识客户端的身份，而DHCP服务器呢可以通过该Option指定一个地址分配策略。</p>
+<p>DHCP Option 82有两个sub option组成：</p>
+<ol>
+<li>
+<p>Agent Remote ID Sub-option：该字段标明代理设备，一般配置为系统的sysname，在一个网络内不容许重复，这样DHCP Server才能针对每台设备指定唯一的地址分配策略。</p>
+<p>SubOpt Len Agent Remote ID<br>
++------+------+------+------+------+------+------+------+--<br>
+| 2 | n | r1 | r2 | r3 | r4 | r5 | r6 | ...<br>
++------+------+------+------+------+------+------+------+--</p>
+</li>
+<li>
+<p>Agent Circuit ID Sub-option：该字段标明接口，一般而言设备会用接口编号以及接口的VLAN ID填充该字段。</p>
+<p>+------+------+------+------+------+------+------+------+--<br>
+| 1 | n | c1 | c2 | c3 | c4 | c5 | c6 | ...<br>
++------+------+------+------+------+------+------+------+--</p>
+</li>
+</ol>
+<p>通过Agent Remote ID和Agent Circuit ID就可以唯一的标识到具体的某台DHCP Relay设备上的某一个端口。</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200412231702.png" alt="P2" loading="lazy"></figure>
+<p>以上图为例，SW1 SW2都为DHCP Relay设备，其GE0/0/1、GE0/0/2接口分别属于VLAN 100、200，都连接着终端PC，当终端PC发出的DHCP报文（Discovery、Request）到达SW1、SW2之后，SW1、SW2转发给DHCP Server时会添加上DHCP Option 82，这里Agent Remote ID使用sysname填充，Agent Circuit ID使用接口编号以及接口VLAN ID填充，当PC1、PC2、PC3、PC4的DHCP报文到达DHCP Server时，每个报文的DHCP Option 82填充内容都是不同的。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200412231722.png" alt="P3" loading="lazy"></figure>
+<p>每个交换机的每个接口收到的DHCP报文都会被独一无二的标识，这就让DHCP Server能够实现针对每个接口都指定固定的IP地址，听起来这个需求很变态，但是实际上确实有人这么做了。</p>
+<p>关于DHCP Option 82更详细的内容可以查看RFC 3046。</p>
+<h4 id="问题描述">问题描述</h4>
+<p>这个问题的客户就是如此变态的让每个接入交换机都作为DHCP Relay，为来自客户端的DHCP报文打上DHCP Option 82，使用一台Linux服务器作为DHCP Server，在DHCP Server上为每一个接入交换机下的每个端口分配一个固定的IP地址。</p>
+<p>问题出现在客户替换了接入交换机的型号之后，从老型号升级为新型号之后终端却获取不到地址了。</p>
+<h4 id="问题分析">问题分析</h4>
+<p>老型号升级成新型号之后，最大的怀疑方向就是新、老型号对于DHCP Option 82的内容填充是不是存在不一致，前面虽然没有仔细说明，但是大家可以注意到我说的使用sysname、接口VLAN ID+接口编号填充都是“一般”，并且具体如何填充，占用几个字节这些涉及到报文格式细节的并没有提及。</p>
+<p>不过当时并没有想那么多，因为客户把作为DHCP Server服务器（一台Centos服务器）的相应配置发送过来了，这个配置很有趣：</p>
+<pre><code class="language-shell">class &quot;port1&quot; {
+match if ( (substring (option agent.remote-id,0,20)=&quot;xinzhenglou-1f&quot;)
+and (binary-to-ascii(10,16,&quot;&quot;,substring(option agent.circuit-id,2,2))=&quot;0&quot;) );
+}
+
+pool {
+option routers 10.32.2.254;
+option subnet-mask 255.255.255.0;
+option domain-name-servers 10.32.1.11;
+allow members of &quot;port1&quot;;
+range 10.32.2.21
+ 10.32.2.21; 
+ }
+</code></pre>
+<p>这里摘录了配置中的一点内容，从配置中我们大概可以看出这个配置文件工作的思路：</p>
+<ol>
+<li>使用class ''xx''匹配DHCP Option的内容，</li>
+<li>然后class ''xx''和一个pool绑定，这个pool中的IP地址只有一个，这样就实现了特定的交换机特定的接口获取到特定、不变的IP地址。</li>
+</ol>
+<h5 id="服务器读取报文值方式">服务器读取报文值方式</h5>
+<p>更有趣的部分是服务器的配置文件如何实现读取Agent Remote ID、Agent Circuit ID内的具体值，首先看下class的配置：</p>
+<pre><code class="language-shell">(option agent.remote-id,0,20)
+(option agent.circuit-id,2,2)
+</code></pre>
+<p>这两个配置就是读取值的关键，可以看到在<code>agent.remote-id</code>、<code>agent.circuit-id</code>的后边分别跟着<code>0,20</code>以及<code>2,2</code>这两个数字，用下图做解释（我曾经尝试用文字解释，发给客户，客户表示没看懂.....）。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200412231750.png" alt="P4" loading="lazy"></figure>
+<p><code>agent.remote-id，0，20</code>的含义如上图所示，DHCP报文中Agent Remote-id的value部分第0个字节开始往后的20字节都为解析范围之内，示例中value部分只有14个字节，所以整个value部分都被解析，16进制内容为：</p>
+<pre><code class="language-shell">78 69 6e 7a 68 65 6e 67 6c 6f 75 2d 31 66 
+</code></pre>
+<p>转换成<code>ascii</code>格式之后内容为<code>xinzhenglou-1f</code>。</p>
+<p>那么<code>agent.circuit-id,2,2</code>所表示的内容也不言而喻：DHCP报文中Agent circuit-id的value部分第2个字节开始往后的2个字节为解析范围之内。<br>
+<img src="http://www.behemoth.icu/img/20200412231812.png" alt="P5" loading="lazy"><br>
+如上图所示，2,2解析的值为：</p>
+<pre><code class="language-shell">0000
+</code></pre>
+<p>转换成<code>ascii</code>格式之后内容为0。</p>
+<p>上面是真实报文例子，从中我们可以看出DHCP服务器如何解析DHCP Option 82中的sub option，当然这是使用老型号交换机时的DHCP Option 82报文。</p>
+<h5 id="交换机dhcp-option-82报文格式">交换机DHCP Option 82报文格式</h5>
+<p>既然已经知道服务器读取数值的原理以及怀疑是新老型号交换机报文不一致导致，那下面就是查询手册获取报文格式。</p>
+<p>查阅老型号交换机手册，得知其DHCP Option 82的报文格式如下：</p>
+<ol>
+<li>
+<p>sub option 1</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200412231835.png" alt="P6" loading="lazy"></figure>
+</li>
+<li>
+<p>sub option 2</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200412231852.png" alt="P7" loading="lazy"></figure>
+</li>
+</ol>
+<p>当然这个报文格式其实在解释取值时已经大概能看出来，唯一不知道的其实只有sub option 1中value的前2个字节表示什么含义。</p>
+<p>在客户的配置下新交换机DHCP Option 82的报文格式如下：</p>
+<ol>
+<li>
+<p>sub option 1</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200412231913.png" alt="P8" loading="lazy"></figure>
+</li>
+<li>
+<p>sub option 2</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200412231926.png" alt="P9" loading="lazy"></figure>
+</li>
+</ol>
+<p>查看了一下客户在新交换机上镜像抓取的报文，DHCP Option 82里填充的内容和报文格式里完全一致。</p>
+<h5 id="使用旧的配置读取新的报文">使用旧的配置读取新的报文</h5>
+<p>客户并没有修改DHCP服务器上的配置，那使用旧的配置读取新的报文会得到什么结果呢？</p>
+<p>由于sub option 2（Agent Remote-id）的报文格式没有改变，所以不受影响，我们只看sub option 1，以一个真实的报文为例：</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200412231935.png" alt="P10" loading="lazy"></figure>
+<p>Agent Circuit-id的value部分值（16进制）为：</p>
+<pre><code class="language-shell">00 04 0b b8 01 17
+</code></pre>
+<p>使用<code>2,2</code>对value部分进行取值解析</p>
+<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200412231954.png" alt="P11" loading="lazy"></figure>
+<p>读取的结果为 <code>0b b8</code>，转换为10进制：<code>3000</code>。</p>
+<p>根据前面的报文格式我们知道这 2 byte代表的值是<code>VLAN ID</code>，很不巧的是客户的<code>VLAN ID</code>值都很大，基本都在1000以上。</p>
+<p>没有哪个接口编号的值会是1000以上，所以自然解析之后的值无法匹配到DHCP配置文件中的任何一个class，自然也没有对应的pool去分配地址，DHCP客户端获取不到地址也是可以预测的结果。</p>
+<p>而实际上接口编号应该是<code>0x17</code>（23号端口），value部分第5个字节开始1个字节的内容为接口编号。</p>
+<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200412232011.png" alt="P12" loading="lazy"></figure>
+<h4 id="有趣的地方">有趣的地方</h4>
+<p>在发现这个原因之后，把分析结果告诉了客户，告知客户配置文件中</p>
+<pre><code class="language-shell">(binary-to-ascii(10,16,&quot;&quot;,substring(option agent.circuit-id,2,2))=&quot;0&quot;)
+</code></pre>
+<p><code>2,2</code>不能继续这么用了，要修改为<code>5,1</code>，客户很高兴地去修改了。</p>
+<p>没过多久，客户又来了，说：不行啊，改了还是获取不到地址啊!</p>
+<p>我心想那不对劲啊，我的技术分析肯定没错，肯定有细节不对的。</p>
+<p>于是我用个人PC上VM workstation里的Centos当DHCP服务器按照客户的配置文件搭建了一个环境测试，结果发现还真是获取不到地址，这时回过头看配置文件，发现配置文件还有一个没注意到的地方，在<code>substring(option agent.circuit-id,2,2)</code>前还有两个数字：</p>
+<pre><code class="language-shell">10,16
+</code></pre>
+<p>查了下这两个数字的含义：</p>
+<ul>
+<li>10代表10进制</li>
+<li>16代表16个bit</li>
+</ul>
+<p>16个bit....，现在新的报文格式里Agent circuit-id只有1个字节了，也就是8个bit。</p>
+<p>果真修改完这里的配置之后，DHCP地址可以正常获取。</p>
+<p>当时我心里的想法：</p>
+<p>这个配置难道不是客户自己配的吗？</p>
+<p>貌似他完全不知道前面的10,16什么含义，不然怎么会我告诉他报文格式变了需要改后边，他并没有意识到前面也要修改呢？？？？</p>
+<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200412232020.png" alt="P13" loading="lazy"></figure>
+<p>有趣真的有趣，很多时候客户总是会让我不经意间震惊一下......</p>
+<h3 id="第二个问题">第二个问题</h3>
+<p>第二个问题还是和DHCP Relay相关，并且也是客户换设备（新老设备都为我司）之后客户端就获取不到地址了，只不过这次换的不是DHCP Relay设备而是DHCP服务器。</p>
+<p>并且这个问题并没有过多涉及报文，只是拓扑有点奇葩。</p>
+<h4 id="问题描述-2">问题描述</h4>
+<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200412232035.png" alt="P14" loading="lazy"></figure>
+<p>客户拓扑介绍：</p>
+<ol>
+<li>路由器作为DHCP服务器，AP、AC分别连接在路由器的GE0/0/1、GE0/0/2接口，不过这两个接口不是三层接口，都是二层接口，为Trunk模式，PVID都为100。</li>
+<li>AC的IP地址为192.168.2.254，手动配置还是自动获取不知道，AC、AP都为C记，没登录上去看。AC与AP通信、AC与路由器通信使用的只有这一个地址：2.254。</li>
+<li>AP地址为DHCP获取，Router上的interface-vlan 100 内的接口地址192.168.2.1作为网关。</li>
+<li>AP下终端的报文采用的是集中转发，终端的DHCP报文由AP通过<code>CAPWAP</code>数据隧道发送到AC，AC解封装之后作为DHCP Relay设备将DHCP报文发送给Router上的192.168.2.1。</li>
+</ol>
+<p>下面用图例展示下地址获取的过程，在这个过程中你会发现有个细节很有趣。</p>
+<ol>
+<li>
+<p>终端的DHCP的Discovery到达AP</p>
+<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200412232054.png" alt="P15" loading="lazy"></figure>
+</li>
+<li>
+<p>AP将报文加上CAPWAP头部，加上IP头部发送给AC,这个报文经由Router二层转发到达AC。IP头部的源目IP为192.168.2.25，目的IP为192.168.254</p>
+<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200412232115.png" alt="P16" loading="lazy"></figure>
+</li>
+<li>
+<p>AC收到之后拆掉CAPWAP隧道封装，将DHCP Discovery转发给Router，中继后的DHCP报文的源IP为192.168.2.254，目的IP为192.168.2.1。</p>
+<figure data-type="image" tabindex="16"><img src="http://www.behemoth.icu/img/20200412232131.png" alt="P17" loading="lazy"></figure>
+<p>至此DHCP Discovery报文就发到了Router了，正常来说就是Router作为DHCP Server回应DHCP Request了。</p>
+<p>但是既然是问题，那肯定是不正常了，换上新的路由器之后路由器收到DHCP Discovery根本不回应任何报文，而我在处理这个问题的时候，发现DHCP Discovery报文就挺奇怪的。</p>
+<p>奇怪在哪呢？详细得看DHCP Discovery报文中的字段就发现了。</p>
+<h4 id="relay-agent-ip-address">Relay Agent IP Address</h4>
+<p>把地址获取过程中1、3部的报文展开，DHCP报文中会有一个Relay Agent IP Address的字段值改变了。</p>
+<figure data-type="image" tabindex="17"><img src="http://www.behemoth.icu/img/20200412232242.png" alt="P18" loading="lazy"></figure>
+<p>Relay Agent IP Address标识了中继设备的IP地址(Relay agent IP address, used in booting via a<br>
+relay agent.)，比较常见的场景：</p>
+<figure data-type="image" tabindex="18"><img src="http://www.behemoth.icu/img/20200412232258.png" alt="P19" loading="lazy"></figure>
+<p>DHCP Relay设备发往DHCP Server的DHCP报文，其中的Relay agent IP address值应该为接受到PC发送的DHCP报文的接口IP地址，这样当DHCP Server收到DHCP Discovery之后可以根据其中的Relay agent IP address在本地的地址池中选择与Relay agent IP address相同网段的地址池进行地址分配。</p>
+<h4 id="有趣的地方-2">有趣的地方</h4>
+<p>现在回过去看下AC发往Router的DHCP  Discovery是不是就有点奇怪了，其中的Relay agent IP address和AC的IP地址、Router interface-vlan 100的接口IP地址都在同网段，同一个网段了还Relay啥啊，报文直接二层转发过去不就行了吗。</p>
+<p>当然直接二层转过去是我按照对我司AC的理解下的结论，C记不了解，但是这个转发确实很奇怪，对于Router而言看到Relay agent IP address和接受到该报文的接口IP地址在同一个网段，没见过，没见过，6的一批，6的一批。</p>
+<p>然后就不回复了。</p>
+<p>之后我去咨询研发，研发表示老型号实现不规范，这种场景不应该回复中继过来的DHCP Discovery，新的型号实现比较规划，我的内心OS：</p>
+<figure data-type="image" tabindex="19"><img src="http://www.behemoth.icu/img/20200412232306.png" alt="P20" loading="lazy"></figure>
+<p>当时听我另外一个同事说，另外一个平台的路由器这种场景下会正常回复DHCP Discovery的。</p>
+<figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412232315.png" alt="P21" loading="lazy"></figure>
+</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[关于框式设备的一些小知识]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/guan-yu-kuang-shi-she-bei-de-yi-xie-xiao-zhi-shi/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/guan-yu-kuang-shi-she-bei-de-yi-xie-xiao-zhi-shi/">
+        </link>
+        <updated>2020-04-13T14:46:15.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="一些基本知识">一些基本知识</h3>
+<h4 id="框式设备组成">框式设备组成</h4>
+<p>以框式交换机为例，框式由以下几个组件组成：</p>
+<ol>
+<li>机框</li>
+<li>主控板</li>
+<li>接口板</li>
+<li>交换网板</li>
+</ol>
+<p>在谈到很多协议时我们会说到转控分离，即网络设备的转发平面、控制平面分离开来，现在新潮的SDN就是典型的转控分离。</p>
+<p>谈SDN几乎必谈转控分离。</p>
+<p>对于盒式设备我们很难直观地看到所谓的设备转发平面、控制平面，整个设备就是一个盒子，转、控两平面都集成在盒子内部。</p>
+<p>但对于框式设备，我们可以“清楚”地看到设备的转发平面、控制平面：</p>
+<ol>
+<li>转发平面：由接口板、交换网板组成</li>
+<li>控制平面：主控板</li>
+</ol>
+<p>不过这种简单的划分方法其实并不严谨，如对于接口板而言，其上也存在着处理一些协议报文的芯片，一些我们传统上定义的控制平面做的事，部分也在接口板在上完成了。</p>
+<h4 id="各组件之间的连接">各组件之间的连接</h4>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200412232510.png" alt="[P1]" loading="lazy"></figure>
+<p>框式交换机各组件之间的连接逻辑图如上。</p>
+<p>接口板、主控板、交换网板都插在机框上，机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接，机框内部存在将各个槽位上接口相互连接的内部连接线。</p>
+<p>接口板、主控板、交换网板之间的通信通过机框提供的接口、内部连接线完成。</p>
+<p>这里就有框式设备的一个坑。</p>
+<h4 id="报文在框式设备内部转发">报文在框式设备内部转发</h4>
+<p>对于框式设备转发报文，业务报文走向如下：</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200412232525.png" alt="P2" loading="lazy"></figure>
+<p>接口板进入-&gt;交换网板-&gt;接口板出</p>
+<p>交换网板负责在接口板之间进行报文的转发。</p>
+<h5 id="转控分离">转控分离</h5>
+<p>在这个过程中可以看到并没有主控板什么事，了解现在网络设备转发的可能都知道，高端一些的网络设备都是所谓的“硬转发”，即转发表项下发在接口板的快速转发芯片中，报文进入接口板直接转发了，根本没有在控制平面查询任何表项。</p>
+<p>注意上面我说的转发表项不是传统意义上的三层路由表（RIB：routing information base）、二层的MAC地址表。</p>
+<p>以三层转发为例，设备在完成路由学习、路由计算之后生成RIB，根据RIB设备会生成一个FIB（forwarding information base），基本长这样：</p>
+<pre><code class="language-shell">Destination/Mask   Nexthop         Flag  TimeStamp     Interface      TunnelID
+10.0.35.3/32       10.0.24.2       DGHU  t[71]         GE0/0/0        0x0
+10.0.24.0/24       10.0.24.4       U     t[24]         GE0/0/0        0x0
+10.0.2.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.23.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.12.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.35.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.3.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.1.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+10.0.5.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
+</code></pre>
+<p>FIB相比较于路由表区别：</p>
+<p>FIB表中nexthop必定是直连的下一跳，路由表中的nexthop可能还不是直连的，比如手动配置的静态路由、从BGP邻居学习过来的路由nexthop地址不在IGP路由表中，这些都需要进行路由迭代计算出直连的下一跳。</p>
+<p>用图大概表述下FIB转发过程：</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200412232606.png" alt="P3" loading="lazy"></figure>
+<p>FIB表在接口板直接完成了对报文的转发，而FIB生成来自于主控板上的RIB，主控板生成FIB之后下发到接口板，之后转发时就没主控板什么事，同时主控板是否繁忙对转发也不会存在影响，这就是典型的转控分离。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200412232631.png" alt="P4" loading="lazy"></figure>
+<h5 id="硬转发">硬转发</h5>
+<p>细心想一下，FIB表只是完成了表项存储在接口板上，如果接口板还需要查找这个FIB表，那似乎每次转发还需要查询表项，这距离所谓的快速“硬件转发”貌似还有一些差距。</p>
+<p>是的。</p>
+<p>实际“硬件转发”时FIB表项并不是存储在接口板的CPU中，转发报文并不需要查询接口板的CPU。</p>
+<p>FIB表项的相关信息直接存储在接口的转发芯片中，转发芯片直接依据内存中FIB表项相关信息进行转发。</p>
+<p>有兴趣的可以看下下面一段内容：</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200412232646.png" alt="P5" loading="lazy"></figure>
+<p><em>在这里我们能够看到目的地址和目的地址的子网掩码分别是0xa000200和0xffffff00，对应的十进制就是10.0.0.2和255.255.255.0。但是通过该图，我只能看到目的地址和子网掩码，如何去该目的我还是一无所知。</em></p>
+<p><em>这时就需要查看该前缀对应VN中的内容，上图中给出了VN的索引号即Index号，所以就要查看该索引号的VN的详细内容。使用下面的命令来查看：</em></p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200412232655.png" alt="P6" loading="lazy"></figure>
+<p><em>通过上图可以看到VN的具体信息，他指明了ADJEntry的内存位置，下一条的地址，权重，标签等信息。<strong>值得注意的是这里只有去往目的地的下一条地址，却没有出接口。</strong></em></p>
+<p><em>于是，我再找一下ADJ的信息，如下图显示</em></p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200412232709.png" alt="p7" loading="lazy"></figure>
+<p><em>这里终于看到了一些信息，这里看到了该接口的ADJ4信息中包含VN的序列号，描述了该接口转发状态，该接口是去往10.0.0.2的出接口。</em></p>
+<h5 id="快速转发">快速转发</h5>
+<p>后续添加</p>
+<h3 id="一些你可能不知道的知识">一些你可能不知道的知识</h3>
+<h4 id="没有交换网板的框式设备">没有交换网板的框式设备</h4>
+<p>并不是所有的框式设备都有交换网板，一些框式设备主控板集成了交换网板的功能。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200412232724.png" alt="P8" loading="lazy"></figure>
+<p>从上图可以看出来，一些框式设备主控和交换网板集成在了一起，那这样所有业务报文的转发都必然需要经过主控板。</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200412232738.png" alt="P9" loading="lazy"></figure>
+<h4 id="hw的css2-1n主控备份">HW的CSS2 1+N主控备份</h4>
+<p>一个和主控板集成交换网板相关的内容。</p>
+<p>HW对于框式交换机二虚一的技术叫做CSS（Cluster Switch System），CSS还分为传统CSS以及CSS2。</p>
+<p>CSS2支持一个所谓的“1+N主控备份“：两个框里只要一个有一个主控板正常工作，两个框的接口板就都可以正常转发。</p>
+<p>而传统CSS做不到，为啥呢？</p>
+<p>因为传统CSS是在主控板集成交换网板的交换机上使用的技术。</p>
+<p>了解交换机多虚一技术的话都应该了解，目前见到的多虚一技术在交换机之间都存在着所谓的“虚拟化专用线缆”，这里是在聊CSS，我们就用CSS里的叫法：集群线缆。对于主控板集成交换网板的框式设备来说，集群线缆连接的位置只能是主控板或者是接口板。</p>
+<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200412232754.png" alt="P10" loading="lazy"></figure>
+<p>集群线缆通过主控板连接：当一个框内主控板全部故障，接口板之间的流量无法通过本框内的主控板转发，同时因为集群线缆在主控板，此时已经丢失了跨框转发流量的能力，无法进行跨框转发。</p>
+<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200412232808.png" alt="P11" loading="lazy"></figure>
+<p>集群线缆通过接口板连接：当一个框内主控板全部故障，别的接口板与该接口板之间的通信中断，理论上除了连接集群线缆的这个接口板自身还能通过集群线缆跨框转发流量，其余的全部都GG。</p>
+<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200412232826.png" alt="P12" loading="lazy"></figure>
+<p>而对于主控板、交换网板独立的框式交换机而言，集群线缆可以连接在交换网板上，一个框内的主控板全部故障，无论是本框内接口板之间的流量还是跨框的流量，都可以正常转发。同时控制层面还有另外一个框内的主控板可用，所以可以实现两个框内只要有一个主控板正常工作，整个CSS2内的两个框转发平面、控制平面都可以正常工作，即所谓的“1+N主控备份”。</p>
+<p>所以通过以上内容，主控板集成交换网板的劣势大家应该能看出来：</p>
+<ol>
+<li>主控板故障直接影响设备转发，挂掉一个主控板，接口板之间的转发通道就少了一个，转发性能影响很大。</li>
+<li>即便做堆叠、集群、IRF之类的交换机虚拟化技术，一个框内的正常主控板还是至少要有一个，不然框之间没有任何连接，控制平面还是挂掉。</li>
+</ol>
+<p><strong>其实以上问题的本质是：主控板、交换网板本来分别属于控制平面、转发平面，两种板卡的功能被集成到一个板卡上，一个板卡同时承担转发、控制平面的工作，其故障必然导致两个平面都受到影响，本来框式设备将转、控分离了，为了节省成本这种设计又把产品倒退了。。</strong></p>
+<h4 id="板卡之间的连线问题">板卡之间的连线问题</h4>
+<p>在基本知识里我提到了：“接口板、主控板、交换网板都插在机框上，机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接，机框内部存在将各个槽位连接的内部连接线。”</p>
+<p>机框内连线承载了板卡之间的通信，下图讲解了逻辑上的连接。</p>
+<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200412232510.png" alt="P1" loading="lazy"></figure>
+<p>在上图里我用蓝色线缆表示接口板与主控板之间的连线，是不是看了这个图大家觉得接口板1、2、3与主控板之间的连线都是完全相同的，或者说带宽相同吧？</p>
+<p>答案是很有可能不相同。</p>
+<p>回忆下我之前说的内容:&quot;机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接。”</p>
+<p>所以把逻辑连接图补充得严谨一些应该是下图的样子。</p>
+<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200412232906.png" alt="P13" loading="lazy"></figure>
+<p>接口板、主控板（集成了交换网板的功能）插在不同的slot（槽位）上，一般框式交换机的主控板slot固定，其它的slot为接口板、交换网板使用。</p>
+<p>内部接口固定在Slot上，固定型号的框式设备，内部接口之间的连线固定，即slot之间的连线固定，理想状态是各个slot之间的连线都是完全相同的：带宽相同。</p>
+<p>但是实际情况是，slot之间的连线可能并不相同，比如下面这样：</p>
+<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200412232923.png" alt="P14" loading="lazy"></figure>
+<p>slot3与slot1、slot2之间的连线拥有比slot4-6与slot1、slot2之间的连线更大带宽，所以可能会出现同样一个接口板插在slot3和slot4上性能不同的情况，如果你遇见过接口板插在不同槽位性能存在差距，嘿嘿，说不定你很幸运地遇见了这样的框式设备。</p>
+<p>再想一个问题：接口板所在slot与交换网板所在slot之间的连线一定超过了接口板上所有接口的速率之和吗？</p>
+<p>想想为什么会存在内部连线带宽不同的情况，你觉得问题答案会是什么呢？</p>
+<figure data-type="image" tabindex="16"><img src="http://www.behemoth.icu/img/20200412232931.png" alt="P15" loading="lazy"></figure>
+<p>10G如果够的话为什么会有20G呢，对外宣传这些slot可都是能够满速率的哦。</p>
+<h4 id="当框式设备遇见fw板卡">当框式设备遇见FW板卡</h4>
+<p>现在很多框式设备都可以插业务板卡，这里的业务板卡不是说接口板，而是：AC（无线控制器）板卡、LB（loadbalance）板卡、FW（firewall）板卡之类的。</p>
+<p>AC板卡还好，但是LB板卡、FW板卡需要对框式设备上的业务流量进行负载均衡、安全检查，这就涉及流量牵引问题，如果LB、FW板卡上存在三层接口，来回流量都会经过LB、FW板卡上三层接口转发，那很好，没啥大问题，和普通三层转发没任何区别。</p>
+<p>如果框式设备为二层转发流量，那就需要涉及流量牵引，将框式设备来回转发的流量牵引到对应的板卡。</p>
+<p><strong>下面以我之前工作过的某厂FW板卡为例讲一些FW板卡的特性，当然并不是所有厂家如下面描述的一样。</strong></p>
+<h5 id="框式设备插fw板卡">框式设备插FW板卡</h5>
+<p>FW板卡和正常FW一样，转发流量时会检查会话表，如果只是单向流量经过会导致流量无法匹配会话的状态机，从而被丢弃，最典型的例子TCP三次握手：</p>
+<figure data-type="image" tabindex="17"><img src="http://www.behemoth.icu/img/20200412232944.png" alt="P16" loading="lazy"></figure>
+<p>报文首包[TCP SYN]经过FW1转发，FW为该条流量创建会话表项，同时记录该条会话状态为[SYN Sent]，之后回包[TCP SYN,ACK]并未经过FW1。</p>
+<figure data-type="image" tabindex="18"><img src="http://www.behemoth.icu/img/20200412233000.png" alt="P17" loading="lazy"></figure>
+<p>当TCP三次握手最后一个报文到达FW1时，FW1检查会话表，发现状态机无法匹配：</p>
+<p>此时对应会话的状态为[SYN Sent]，下一个报文应该为[TCP SYN,ACK],但是FW1收到的为[TCP ACK]，状态机匹配失败，报文因此被丢弃。</p>
+<p>为此对于FW/FW板卡而言，为保证报文的正常转发需要让来回流量全部经过，不能出现单向路径。</p>
+<figure data-type="image" tabindex="19"><img src="http://www.behemoth.icu/img/20200412233010.png" alt="P18" loading="lazy"></figure>
+<p>如果框式设备上只有一个FW板卡，引流还不算复杂，使用MQC匹配来回流量，将来回流量都引到FW板卡上。</p>
+<figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412233028.png" alt="P19" loading="lazy"></figure>
+<p>FW板卡这种业务板卡有明确的内部连接接口号，插在槽位上之后在设备命令行下可以看到内部接口编号，使用MQC将来回流量的出接口设置为该内部接口即可，流量就会通过该接口送达该槽位上的FW板卡。</p>
+<figure data-type="image" tabindex="21"><img src="http://www.behemoth.icu/img/20200412233042.png" alt="P20" loading="lazy"></figure>
+<p>如果框式设备上存在多个FW板卡，将流量进行分流，分别牵引到不同的FW板卡即可。</p>
+<h5 id="转发速率问题">转发速率问题</h5>
+<p>当框式交换机插上FW插卡，同时所有业务流量需要经过FW插卡转发时，对于单个业务流而言，经过该框转发的最大速率也会发生变化，这里不仅是因为经过FW插卡多处理一次增加了延迟，另外一个原因是FW插卡转发涉及对报文的四层甚至七层的处理，与二三层硬件快速转发相比较速率差距非常大。</p>
+<figure data-type="image" tabindex="22"><img src="http://www.behemoth.icu/img/20200412233054.png" alt="P21" loading="lazy"></figure>
+<p>同时由于FW插卡上会话表的存在，来回报文必须在一个FW插卡上处理，单个业务流的速率上限基本就是一个FW插卡的转发速率上限，即便存在多个FW插卡，也无法同时使用多个FW插卡转发一条业务流。</p>
+<p>同时即便是一个FW插卡上转发速率也可能存在很大的区别，对于FW插卡而言转发需要CPU参与，这点和AC集中转发模式时处理CAPWAP报文类似。</p>
+<p>现在的网络设备也和我们的电脑主机一样CPU都是多核心、多线程的，体现在设备转发时就是存在多个vCPU，每个vCPU都参与转发报文的。</p>
+<p>那当一条业务流的报文进入到FW插卡上，多个vCPU会如何协同转发该条业务流呢？</p>
+<p>其实和大家非常熟悉的链路聚合一样，也存在基于流分担、基于包分担两种模式：</p>
+<figure data-type="image" tabindex="23"><img src="http://www.behemoth.icu/img/20200412233105.png" alt="P22" loading="lazy"></figure>
+<ol>
+<li>
+<p>基于流：一条流被分担到一个固定的vCPU上，所以该条流经过FW插卡转发时速率不会超过一个vCPU的性能上限。</p>
+<figure data-type="image" tabindex="24"><img src="http://www.behemoth.icu/img/20200412233117.png" alt="P23" loading="lazy"></figure>
+</li>
+<li>
+<p>基于包：每个数据包会被分担到不同的vCPU上，所以一条流的数据包会被分担到所有的vCPU上进行转发处理，单条业务流经过FW插卡转发的速率是所有vCPU的性能之和。</p>
+</li>
+</ol>
+<p>乍一看使用基于包的模式转发速率会更高啊，一条流能跑满FW的速率，但基于包的转发模式存在一个致命的缺点：每个包在不同的vCPU处理，因此无法保证每个vCPU的处理延时相同，所以报文经过FW插卡之后可能直接乱序了，如下图所示。</p>
+<figure data-type="image" tabindex="25"><img src="http://www.behemoth.icu/img/20200412233128.png" alt="P24" loading="lazy"></figure>
+<p>报文乱序对于一些业务是完全无法忍受的，如视频会议、语音.......</p>
+<p>其实不管是FW插卡还是链路聚合，使用基于包的负载模式都会存在相同的问题，所以实际场景中如果业务对速率要求比较高，但是对是否乱序无所谓可以使用基于包的模式（比如测速给用户看），其它情况下推荐使用基于流，而实际上很多时候网络厂家的默认设置都是基于流。</p>
+<p>速率问题不仅是FW插卡如此，构架类似的盒式防火墙也会是相同的情况，所以如果遇见打流测试单条流速率和设备宣传的转发性能相差太多，先别急着喷设备虚标参数（国内防火墙的转发性能参数大家都懂），先问问厂家TAC是不是这设备的转发模式分为基于流和基于包，是不是能调整。</p>
+<p>调整为基于包模式之后再去打流测试，结果会快很多，具体快多少看这个设备有多少个逻辑上的vCPU咯，原本用一个vCPU，之后用n个，那结果就是翻n倍咯。</p>
+<figure data-type="image" tabindex="26"><img src="http://www.behemoth.icu/img/20200412233135.png" alt="P25" loading="lazy"></figure>
+<h5 id="本地优先还是不呢">本地优先还是不呢？</h5>
+<p>框式交换机二虚一之后与上下行设备进行跨框链路聚合是很常见的组网，基本为了减少跨框流量的产生，厂家都会默认开启“本地优先”，即链路聚合的出方向流量分担默认都是在本框上的聚合成员接口进行。</p>
+<p>那当框式交换机上插了FW插卡，并且来回流量都被MQC牵引到FW插卡上，如果还是本地优先会不会出现什么问题呢？</p>
+<p>看下面的例子：</p>
+<figure data-type="image" tabindex="27"><img src="http://www.behemoth.icu/img/20200412233154.png" alt="P26" loading="lazy"></figure>
+<p>SW3、SW4与二虚一之后的逻辑交换机建立跨设备的链路聚合，SW3使用聚合接口转发负载分担将一条流发送往SW1，SW1在经过本框的FW插卡处理之后依据本地优先转发的原则，将报文从本框发往SW4。</p>
+<p>SW4上发送该条流的回向报文，负载分担结果为通过与SW2相连的接口发送，报文到达SW2，SW2跨框还是不跨框呢？</p>
+<p>不跨框的话本框上的FW插卡是没有会话表能够匹配该报文的，所以此时如果还是本地优先，结果只能是转发失败，这时就需要关闭本地优先，让流量跨框到SW1，上到SW1的FW插卡处理，再从SW1发往SW3。</p>
+<p>这种场景下流量依旧需要保证来回都在一个FW插卡，不然匹配不上会话。SW3、SW4通过聚合接口转发时如何负载分担流量对于框式交换机SW1、2来说完全是未知的，极有可能出现来回流量收发不在一个框上，此时只能让流量跨框回到创建会话的框上。</p>
+<h5 id="板卡间会话备份">板卡间会话备份</h5>
+<p>对于上一个问题可能有的人会想到在FW板卡上进行会话实时备份。</p>
+<figure data-type="image" tabindex="28"><img src="http://www.behemoth.icu/img/20200412233207.png" alt="P27" loading="lazy"></figure>
+<p>确实能够解决问题，像HW的HRP一样在板卡间进行备份，在FW板卡之间拉一根线备份会话，但是此时会带来一个新的问题：每个板卡上的会话数目都会变多。</p>
+<figure data-type="image" tabindex="29"><img src="http://www.behemoth.icu/img/20200412233239.png" alt="P28" loading="lazy"></figure>
+<p>原本一个板卡会话上限10K，从别的板卡备份过来的会话占了4k，该板卡还能新创建的会话只剩6k了，所以实际上该功能很少使用，太耗费性能。想想客户买了2个FW板卡，一个框插一个，然后你开启板卡间会话备份，怎么向客户解释现在两个板卡加在一起会话上限只有一个板卡的规格？</p>
+<figure data-type="image" tabindex="30"><img src="http://www.behemoth.icu/img/20200412233248.png" alt="P29" loading="lazy"></figure>
+<p>那什么时候可以用板卡间会话备份呢？</p>
+<p>板卡为主备备份的时候，这时候无所谓。</p>
 ]]></content>
     </entry>
 </feed>

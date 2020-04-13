@@ -1,0 +1,294 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>L3 VNI | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="L3 VNI | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="Why
+前几天哥们在看VxLAN，看到L3 VNI感觉很疑惑，就问：为什么需要L3 VNI?
+这个问题在我17年学习VxLAN时也同样疑惑了很久，对着CiscoLive上的文档看了半天没看明白，同时当时没看明白的还有对称、非对称IRB(In..." />
+    <meta name="keywords" content="技术杂谈" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              L3 VNI
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                10 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/ERd1sKPdu/" class="post-tag">
+                  # 技术杂谈
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="why">Why</h3>
+<p>前几天哥们在看VxLAN，看到L3 VNI感觉很疑惑，就问：为什么需要L3 VNI?</p>
+<p>这个问题在我17年学习VxLAN时也同样疑惑了很久，对着CiscoLive上的文档看了半天没看明白，同时当时没看明白的还有对称、非对称IRB(Integrated Routing and Bridge)。</p>
+<p>正好前段时间搭建cloudcampus环境，园区网部分用到的就是VxLAN，在环境搭建中又重新研究了一遍VxLAN，发现回到二三层转发的本质看VxLAN的转发，当时困惑的问题就很清晰了。</p>
+<p>（题外话：H记的方向是数据中心交换机支持VxLAN，但是园区网主推的解决方案中没有涉及到VxLAN，但是很多其他厂家的智慧园区网解决方案中都上了VxLAN，为了对标解决方案，只能在园区网交换机上新开发了VxLAN功能。H记园区网交换机、数据中心交换机特性差距还是很大，不同的研发团队，想想也是蛮有趣，不过还是要感谢这个“强行的”上的特性，不然我也没机会实际环境中搞一搞VxLAN）。</p>
+<h3 id="传统vlan三层转发">传统VLAN三层转发</h3>
+<p>VxLAN我们叫做MAC in UDP，本质还是基于MAC的转发，只是转发的接口从交换机的物理接口变成了VxLAN Tunnel的接口，所以如果只是二层转发的VxLAN从转发平面原理上来看，和传统二层交换机转发没多大区别（VxLAN二层转发也不涉及到L3 VNI）。</p>
+<p>区别就在于三层转发时，VxLAN多了一个分布式网关，这和传统的交换机VLANIF(SVI)接口三层转发就存在一些区别了，不过本质还是有很多相同点，所以先回顾下交换机使用VLANIF(SVI)接口的细节。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200412233556.png" alt="P1" loading="lazy"></figure>
+<p>以上面最简单的topo为例：<br>
+host1、host2分别连接在交换机的VLAN 10、VLAN 20接口上，交换机创建VLANIF10 20接口作为VLAN 10、VLAN 20的网关（这里假设VLANIF的MAC都为MAC2，实际中有些厂家交换机VLANIF接口MAC地址并不一致，比如C记就有一段bridge MAC的概念，每个VLANIF接口的MAC地址都不一致）。</p>
+<p>这里ARP学习过程就不展开，直接讲转发过程，Host 1与Host 2如何进行三层通信。</p>
+<ol>
+<li>
+<p>Host1想要给Host2发送报文，通过对比目的IP与自身的接口掩码，发现并非与自己同网段的IP地址，需要进行三层转发。根据本地的路由表查找路由，对于windows主机配置网关其实就是生成一条默认路由，下一跳地址就是网关。此时主机查找路由表匹配中默认路由，将报文交给网关。此时报文源MAC：MAC1，目的MAC：MAC2。</p>
+</li>
+<li>
+<p>交换机收到报文之后，目的MAC为本地VLANIF的MAC地址，二层转发模块交给三层转发模块处理，VLANIF 20解析查看目的IP地址为 10.1.2.1，非本接口IP地址，查找IP路由表，此时将会匹配到由VLANIF 20生成的直连路由，交给VLANIF 20处理。</p>
+</li>
+<li>
+<p>VLANIF 20此时将会查找ARP表项，找到10.1.2.1的MAC地址，生成数据帧：源MAC为自身接口MAC地址（MAC2，虽然看起来没变化，但是如果是路由器三层接口转发或者C记的SVI接口MAC地址不一样，此时就可以看到三层转发的源MAC地址变化了），目的MAC：MAC3。生成的二层数据帧交给二层转发模块处理，二层模块根据MAC地址表，从对应接口转发出去，到此数据包才到达了Host2。</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200412233643.png" alt="P2" loading="lazy"></figure>
+</li>
+</ol>
+<p>以上过程的重点内容：</p>
+<ol>
+<li>VLANIF 10三层查找路由表，交由VLANIF 20</li>
+<li>VLANIF 20查找ARP之后二层查找MAC地址表</li>
+<li>源目MAC的替换</li>
+</ol>
+<p>下面的VxLAN转发过程这些内容非常类似。</p>
+<h3 id="vxlan三层转发">VxLAN三层转发</h3>
+<p>在上面的过程中跨网段转发是在交换机内部的VLANIF中执行三层转发的，对比来看下VxLAN的三层转发，很多场景下VxLAN的VNI就是由VLAN  Tag映射而来，把VxLAN的三层转发对比看做VLAN之间的三层转发，此时去看VxLAN集中式网关是不是觉得很类似，只是VLAN ID变成了VNI，VLANIF变成了VBDIF。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200412233736.png" alt="P3" loading="lazy"></figure>
+<p>上面的topo中Host1、Host2分别属于VLAN 10、VLAN 20，在进入VxLAN中时被映射到VNI 100、200,网关分别为VBDIF 10、VBDIF 20。</p>
+<p>上面的topo为例VxLAN网络中Host 1访问Host 2的跨三层转发：</p>
+<ol>
+<li>Host1访问Host2的报文发送到网关（源MAC:MAC1，目的MAC:MAC2），报文经由非VxLAN交换机到达VTEP2，查找MAC地址表，加上VxLAN头部封装通过VxLAN Tunnel发送给VTEP1。</li>
+<li>VTEP1收到之后查看外层目的MAC、目的IP，去除外层封装将内层报文本地解析交给VxLAN模块处理，内部报文目的MAC为MAC2，也就是VBDIF接口MAC，查看内层目的IP，非本接口IP，此时需要查找VxLAN三层转发表项，发现需要交由VBDIF20处理。<br>
+VBDIF20收到之后查找ARP表项，生成二层数据帧，此时源MAC：MAC3，目的MAC：MAC4。查找二层转发表项，发现需要通过VxLAN Tunnel交由VTEP3，加上VxLAN头部发送给VTEP3。</li>
+<li>VTEP3去除外部封装之后，查看目的MAC，交由下层非VxLAN交换机转发，经由下游交换机最终转发到Host2。</li>
+</ol>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200412233759.png" alt="P4" loading="lazy"></figure>
+<p>还是看转发过程中重点内容：</p>
+<ol>
+<li>VBDIF 10三层转发查找路由表把处理过程交给了VBDIF 20</li>
+<li>VBDIF 20查找ARP之后查找二层表项，发现出接口为VxLAN Tunnel，交给VTEP 3，此时为二层转发</li>
+<li>VTEP 3将报文从VxLAN域内转到了非VxLAN域。</li>
+</ol>
+<h3 id="分布式网关三层转发">分布式网关三层转发</h3>
+<p>只是看集中式网关，VxLAN的三层转发和VLAN间三层转发很类似，但是如果是分布式网关呢？</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200412233837.png" alt="P5" loading="lazy"></figure>
+<p>以上面的拓扑为例，VTEP1 VTEP2都是分布式网关，都存在VBDIF10、VBDIF 20。<br>
+那问题就来了：<br>
+Host1访问Host2时VBDIF10三层转发查找路由表，把报文交给VBDIF20，由哪台设备上的VBDIF 20执行二层转发查找Host2的MAC呢？<br>
+试想一下可能的方式：</p>
+<ol>
+<li>
+<p>VTEP1上，VBDIF 10三层转发交给VBDIF 20，VBDIF 20查找ARP、二层查找MAC表项，之后发送给VTEP2，此时已经属于二层转发过程,VTEP 2收到之后执行二层转发。<br>
+也就是说VTEP1上发送给VTEP2的内层报文目的MAC已经替换为Host2的MAC地址：MAC4，并且此时VNI已经为Host 2所属VNI。</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200412233857.png" alt="P6" loading="lazy"></figure>
+</li>
+<li>
+<p>VTEP2上，VTEP1上的VBDIF 10三层转发通过VxLAN Tunnel把报文交给VTEP2的VBDIF 20，VTEP2上VBDIF 20执行二层转发过程。<br>
+也就说VTEP1上发送给VTEP2的内层报文目的MAC不是Host2的MAC地址，而是VBDIF20的MAC地址：MAC3(三层转发匹配主机路由时为什么内层目的MAC是MAC3大家自己感兴趣可以深入研究)。 此时的VNI其实就是L3 VNI，作用可以自行先想下。</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200412233924.png" alt="P7" loading="lazy"></figure>
+</li>
+</ol>
+<p>再深入想一下，方式1和方式2 中VTEP 1的处理有什么区别：</p>
+<ol>
+<li>
+<p>VTEP 1上的VBDIF 20执行二层查找、转发，那就意味着：<br>
+a)	VTEP 1上需要创建整网所有VNI的分布式网关：即便VTEP 1下面并没有VNI 200那也得创建VBDIF 20。<br>
+b)	VTEP1拥有VNI 200所属广播域的ARP表项，这样才能知道二层转发时扔给哪个VTEP。</p>
+</li>
+<li>
+<p>VTEP 2上不执行VBDIF 20执行二层查找、转发：<br>
+a)	VTEP1不需要创建整网所有VNI的分布式网关，它不需要其他的VBDIF用于执行二层转发。<br>
+b)	VTEP 1上拥有Host 2的路由表项就可以，VTEP 1知道扔给VTEP 2就可以，二层查找交由VTEP 2上的VBDIF 20执行。</p>
+</li>
+</ol>
+<h3 id="对称irb和非对称irb">对称IRB和非对称IRB</h3>
+<p>实际上第一种方式就是非对称IRB，第二种方式就是对称IRB。<br>
+仔细想一下第2种方式时Host 1和Host 2相互访问时VTEP1 VTEP2之间传输的内层报文的源目MAC是不是互反的(VBDIF 10、VBDIF 20的MAC)。</p>
+<p>第1种方式Host 1访问Host 2时源MAC为MAC3(VBDIF 20)，目的MAC为MAC4(Host2)。而Host 2访问Host 1时源MAC为MAC 2(VBDIF 10),目的MAC为MAC1(Host)。来回报文源目MAC并不对称，所以称为非对称式(未标注VNI)。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200412233952.png" alt="非对称IRB" loading="lazy"></figure>
+<p>第2种方式Host 1、Host 2之间互访来回内层报文源目MAC都是VBDIF 10、VBDIF 20，所以被称为对称式IRB(未标注VNI)。</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200412234016.png" alt="对称IRB" loading="lazy"></figure>
+<h3 id="回归正题-l3-vni">回归正题 - L3 VNI</h3>
+<p>为什么需要L3 VNI？</p>
+<p>非对称IRB转发时从VTEP到另外一个VTEP此时已经为二层转发，VxLAN头部中的VNI已经为目的主机所属VNI(上面的图并没有标出)。</p>
+<p>对称式IRB转发这个VNI应该是什么？目的主机所属的VNI吗？<br>
+那就是非对称IRB了。<br>
+那应该是什么？<br>
+标记交给哪个VBDIF处理的VNI。</p>
+<p>对称式IRB转发时VTEP对于接收到的报文需要判断内层报文应该交给哪个VBDIF去处理，这个判断依据就是L3 VNI，间接关联在VBDIF下的VNI。<br>
+ip vpn-instance vpn1<br>
+ipv4-family<br>
+route-distinguisher 2:100<br>
+vpn-target 1:100 export-extcommunity evpn<br>
+vpn-target 1:100 import-extcommunity evpn<br>
+vxlan vni 100     //三层VNI</p>
+<p>interface Vbdif10<br>
+mac-address 0000-5e00-0101<br>
+ip binding vpn-instance vpn1<br>
+arp collect host enable<br>
+arp distribute-gateway enable<br>
+ip address 192.168.10.1 255.255.255.0</p>
+<h3 id="总结">总结</h3>
+<p>实际中L3 VNI的作用并不只是上面说的那么简单：判断交给VBDIF处理。<br>
+和传统的ip vpn-instance一样，在控制平面BGP  EVPN中，还可以控制路由的学习。<br>
+同时很多细节也没有展开，如对称IRB转发时，从VTEP 1到VTEP 2匹配中主机路由，内层报文目的MAC是MAC3，为什么是MAC3？这个MAC3实际上是BGP EVPN通过Type2 IRB类型路由传递主机路由时携带的MAC地址，同时L3 VNI也是通过该方式携带，这里只是为了从转发的角度结合传统的VLAN之间三层转发，方便大家理解。<br>
+最后，二、三层转发基础很重要(任何基础都挺重要)，扎实的基础、研究过MPLS L3 VPN、L2 VPN再看VxLAN，相似的地方真多，理解起来真简单，interesting！</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#why">Why</a></li>
+<li><a href="#%E4%BC%A0%E7%BB%9Fvlan%E4%B8%89%E5%B1%82%E8%BD%AC%E5%8F%91">传统VLAN三层转发</a></li>
+<li><a href="#vxlan%E4%B8%89%E5%B1%82%E8%BD%AC%E5%8F%91">VxLAN三层转发</a></li>
+<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E7%BD%91%E5%85%B3%E4%B8%89%E5%B1%82%E8%BD%AC%E5%8F%91">分布式网关三层转发</a></li>
+<li><a href="#%E5%AF%B9%E7%A7%B0irb%E5%92%8C%E9%9D%9E%E5%AF%B9%E7%A7%B0irb">对称IRB和非对称IRB</a></li>
+<li><a href="#%E5%9B%9E%E5%BD%92%E6%AD%A3%E9%A2%98-l3-vni">回归正题 - L3 VNI</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/http-xue-xi-bi-ji-4huan-cun/">
+              <h3 class="post-title">
+                HTTP学习笔记（4）缓存
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

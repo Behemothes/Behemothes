@@ -1,0 +1,546 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>python 正则表达式-re | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="python 正则表达式-re | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="基本符号
+老生常谈的正则表达式，本笔记主要记录python re模块的使用，基本符号在这里记录。
+
+
+
+参数
+说明
+
+
+
+
+^
+指定匹配字符串的行首
+
+
+$
+指定匹配字符串的结尾
+
+
+*
+表示0个以上的字符
+
+
++
+表示1个以上的字符
+
+
+..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              python 正则表达式-re
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基本符号">基本符号</h2>
+<p>老生常谈的正则表达式，本笔记主要记录<code>python re</code>模块的使用，基本符号在这里记录。</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>^</td>
+<td>指定匹配字符串的行首</td>
+</tr>
+<tr>
+<td>$</td>
+<td>指定匹配字符串的结尾</td>
+</tr>
+<tr>
+<td>*</td>
+<td>表示0个以上的字符</td>
+</tr>
+<tr>
+<td>+</td>
+<td>表示1个以上的字符</td>
+</tr>
+<tr>
+<td>\</td>
+<td>去掉指定字符的特殊含义</td>
+</tr>
+<tr>
+<td>^</td>
+<td>指定行的开始</td>
+</tr>
+<tr>
+<td>$</td>
+<td>指定行的结束</td>
+</tr>
+<tr>
+<td>.</td>
+<td>匹配一个非换行符的字符</td>
+</tr>
+<tr>
+<td>*</td>
+<td>匹配零个或多个先前字符</td>
+</tr>
+<tr>
+<td>[]</td>
+<td>匹配一个指定范围内的字符</td>
+</tr>
+<tr>
+<td>[^]</td>
+<td>匹配一个不在指定范围内的字符</td>
+</tr>
+<tr>
+<td>(..)</td>
+<td>标记匹配字符</td>
+</tr>
+<tr>
+<td>&lt;</td>
+<td>指定单词的开始</td>
+</tr>
+<tr>
+<td>&gt;</td>
+<td>指定单词的结束</td>
+</tr>
+<tr>
+<td>X{m}</td>
+<td>重复字符X,m次  如：'0{5}'匹配包含5个o的行。</td>
+</tr>
+<tr>
+<td>X{m,}</td>
+<td>重复字符X,至少m次  如：'o{5,}'匹配至少有5个o的行。</td>
+</tr>
+<tr>
+<td>X{m,n}</td>
+<td>重复字符X,至少m次，不多于n次  如：'o{5,10}'匹配5--10个o的行。</td>
+</tr>
+<tr>
+<td>W</td>
+<td>匹配文字和数字字符，也就是[A-Za-z0-9]</td>
+</tr>
+<tr>
+<td>b</td>
+<td>单词锁定符</td>
+</tr>
+<tr>
+<td>+</td>
+<td>匹配一个或多个先前的字符</td>
+</tr>
+<tr>
+<td>?</td>
+<td>匹配零个或多个先前的字符</td>
+</tr>
+<tr>
+<td>a</td>
+<td>b</td>
+</tr>
+<tr>
+<td>()</td>
+<td>分组符号</td>
+</tr>
+<tr>
+<td>\w</td>
+<td>匹配字母、数字及下划线</td>
+</tr>
+<tr>
+<td>\W</td>
+<td>匹配不是字母、数字及下划线的字符</td>
+</tr>
+<tr>
+<td>\s</td>
+<td>匹配任意空白字符，等价于[\t\n\r\f]</td>
+</tr>
+<tr>
+<td>\S</td>
+<td>匹配任意非空字符</td>
+</tr>
+<tr>
+<td>\d</td>
+<td>匹配任意数字，等价于[0-9]</td>
+</tr>
+<tr>
+<td>\D</td>
+<td>匹配任意非数字的字符</td>
+</tr>
+<tr>
+<td>\A</td>
+<td>匹配字符串开头</td>
+</tr>
+<tr>
+<td>\Z</td>
+<td>匹配字符串结尾，如果存在换行，只匹配到换行前的结束字符串</td>
+</tr>
+<tr>
+<td>\z</td>
+<td>匹配字符串结尾，如果存在换行，同时还会匹配换行符</td>
+</tr>
+<tr>
+<td>\G</td>
+<td>匹配最后匹配完成的位置</td>
+</tr>
+<tr>
+<td>\n</td>
+<td>匹配一个换行符</td>
+</tr>
+<tr>
+<td>\t</td>
+<td>匹配一个制表符</td>
+</tr>
+</tbody>
+</table>
+<h2 id="macth">macth()</h2>
+<p>顺序匹配第一个匹配正则表达式的内容，并且是从开头进行匹配<code>content</code>。</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 123 4567 World_This is a Regex Demo'
+print(len(content))
+re_result = re.match('^Hello\s\d\d\d\s\d{4}\s|w{10}',content)
+print(re_result)
+print(re_result.group())
+print(re_result.span())
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">41
+&lt;re.Match object; span=(0, 25), match='Hello 123 4567 World_This'&gt;
+Hello 123 4567 World_This
+(0, 25)
+</code></pre>
+<p>其中span()为匹配到的范围，而group()代表匹配到的内容。</p>
+<p>如果只想要匹配结果中的某个内容，可以将正则表达式中参数用()起来，然后使用re_result.group(n)获取，n代表正则表达式第n个()匹<br>
+配中的内容。</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 123 4567 World_This is a Regex Demo'
+re_result = re.match('^Hello\s(\d\d\d)\s\d{4}\s\w{10}',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">123
+</code></pre>
+<h2 id="贪婪与非贪婪">贪婪与非贪婪</h2>
+<p>查看一个使用<code>.*</code>匹配的例子:</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 1234567 World_This is a Regex Demo'
+re_result = re.match('^Hello.*(\d+).*Demo$',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">7
+</code></pre>
+<p>因为<code>.*</code>会尽可能多的匹配，而<code>\d+</code>表示至少一个数组，这样<code>123456</code>都被<code>.*</code>匹配到了，留给<code>\d+</code>的就只有一个<code>7</code>。这叫做贪婪匹配。<br>
+而想要使用非贪婪匹配也很简答，将<code>.*</code>改成<code>.*?</code>即可</p>
+<pre><code class="language-python">import re
+
+content = 'Hello 1234567 World_This is a Regex Demo'
+re_result = re.match('^Hello.*?(\d+).*Demo$',content)
+print(re_result.group(1))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">1234567
+</code></pre>
+<p>注意，尽量不要将非贪婪匹配用在结尾，因为它表示尽可能少的匹配，所以有可能匹配的就是空字符，不匹配任何内容。</p>
+<h2 id="修饰符">修饰符</h2>
+<p>将<code>content</code>内容修改为换行，再次看下之前例子的匹配结果。</p>
+<pre><code class="language-python">content = '''
+Hello 1234567 World_This is
+          a Regex Demo
+'''
+re_result = re.match('^Hello.*?(\d+).*Demo$',content)
+print(re_result.group(1))
+#执行结果
+AttributeError: 'NoneType' object has no attribute 'group'
+</code></pre>
+<p>直接显示无法匹配，因为默认情况下<code>.</code>匹配的任意字符是不包含换行的，所以想要能够匹配换行的字符，需要加上修饰符<code>re.S</code>，将代<br>
+码修改如下：</p>
+<pre><code class="language-python">import re
+
+content = '''Hello 1234567 World_This is
+          a Regex Demo
+'''
+re_result = re.match('^Hello.*?(\d+).*Demo$',content,re.S)
+print(re_result.group(1))
+#执行结果
+1234567
+</code></pre>
+<p>常用修饰符：</p>
+<table>
+<thead>
+<tr>
+<th>修饰符</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>re.I</td>
+<td>忽略大小写</td>
+</tr>
+<tr>
+<td>re.L</td>
+<td>本地化识别</td>
+</tr>
+<tr>
+<td>re.M</td>
+<td>多行匹配，影响<code>^</code>和<code>&amp;</code>效果</td>
+</tr>
+<tr>
+<td>re.S</td>
+<td>让<code>.</code>匹配包括换行在内的所有字符</td>
+</tr>
+<tr>
+<td>re.U</td>
+<td>根据unicode字符集解析字符，影响<code>\w</code> <code>\W</code> <code>\b</code> <code>\B</code></td>
+</tr>
+</tbody>
+</table>
+<p>匹配网页时，<code>re.S</code> <code>re.I</code> 比较常用。</p>
+<h3 id="转义字符">转义字符</h3>
+<p>使用<code>\</code>进行匹配和参数内容一致的内容。</p>
+<h2 id="search">search()</h2>
+<p><code>match()</code>只能从开头进行匹配，无法匹配正文内容中非开头的字段，所以实际使用<code>search()</code>更多。<br>
+<code>search()</code>同样也是返回第一个匹配到的内容，而不是所有，匹配所有符合条件的使用<code>findall</code>。</p>
+<p><code>search()</code>实际使用示例：</p>
+<pre><code class="language-python">import re
+
+html = '''&lt;div id=&quot;songs-list&quot;&gt;
+    &lt;h2 class=&quot;title&quot;&gt;经典老歌&lt;/h2&gt;
+    &lt;p class=&quot;introduction&quot;&gt;
+        经典老歌列表
+    &lt;/p&gt;
+    &lt;ul id=&quot;list&quot; class=&quot;list-group&quot;&gt;
+        &lt;li data-view=&quot;2&quot;&gt;一路上有你&lt;/li&gt;
+        &lt;li data-view=&quot;7&quot;&gt;
+            &lt;a href=&quot;/2.mp3&quot; singer=&quot;任贤齐&quot;&gt;沧海一声笑&lt;/a&gt;
+        &lt;/li&gt;
+        &lt;li data-view=&quot;4&quot; class=&quot;active&quot;&gt;
+            &lt;a href=&quot;/3.mp3&quot; singer=&quot;齐秦&quot;&gt;往事随风&lt;/a&gt;
+        &lt;/li&gt;
+        &lt;li data-view=&quot;6&quot;&gt;&lt;a href=&quot;/4.mp3&quot; singer=&quot;beyond&quot;&gt;光辉岁月&lt;/a&gt;&lt;/li&gt;
+        &lt;li data-view=&quot;5&quot;&gt;&lt;a href=&quot;/5.mp3&quot; singer=&quot;陈慧琳&quot;&gt;记事本&lt;/a&gt;&lt;/li&gt;
+        &lt;li data-view=&quot;5&quot;&gt;
+            &lt;a href=&quot;/6.mp3&quot; singer=&quot;邓丽君&quot;&gt;&lt;i class=&quot;fa fa-user&quot;&gt;&lt;/i&gt;但愿人长久&lt;/a&gt;
+        &lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/div&gt;'''
+
+res = re.search('&lt;li.*?class=&quot;active&quot;.*?singer=&quot;(.*?)&quot;&gt;(.*?)&lt;/a&gt;',html,re.S)
+if res:
+    print(res.group(1),res.group(2))
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">齐秦 往事随风
+</code></pre>
+<h2 id="findall">findall()</h2>
+<p>匹配所有一般使用<code>findall()</code>,还是上面的<code>html</code>，匹配所有的歌手和歌名，修改下匹配的表达式，使用<code>findall</code></p>
+<pre><code class="language-python">import  re
+
+res = re.findall('&lt;li.*?href=&quot;(.*?)&quot;.*?singer=&quot;(.*?)&quot;&gt;(.*?)&lt;/a&gt;',html,re.S)
+for r in res:
+    print(r[0],r[1],r[2])
+</code></pre>
+<h2 id="sub">sub()</h2>
+<p>替换匹配的结果。</p>
+<pre><code class="language-python">str1 = '123ABC456'
+replace = re.sub('[a-z|A-Z]','',str1)
+print(replace)
+执行结果：
+123456
+</code></pre>
+<p>还是上面的文本，使用sub去除<code>&lt;a&gt;</code>标签，直接匹配去除<code>&lt;a&gt;</code>之后的<code>&lt;li&gt;</code>标签。</p>
+<pre><code class="language-python">import re
+
+new_html = re.sub('&lt;a.*?&gt;|&lt;/a&gt;','',html)    #匹配&lt;a&gt;标签，替换为空
+results = re.findall('&lt;li.*?&gt;(.*?)&lt;/li&gt;',new_html,re.S)
+for result in results:
+     print(result.strip())
+</code></pre>
+<p>执行结果：</p>
+<pre><code class="language-python">一路上有你
+沧海一声笑
+往事随风
+光辉岁月
+记事本
+</code></pre>
+<h2 id="compile">compile()</h2>
+<p>将常用的正则表达式转换成变量，方便后续调用,同时可以传入修饰符。</p>
+<pre><code class="language-python">import re
+
+pattern = re.compile('[a-z]',re.I)     #使用[a-z]匹配小写字母，同时传入了修饰符re.S.
+print(re.findall(pattern,'123ABCabc'))
+</code></pre>
+<p>执行结果：<br>
+<code>['A', 'B', 'C', 'a', 'b', 'c']</code></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E7%AC%A6%E5%8F%B7">基本符号</a></li>
+<li><a href="#macth">macth()</a></li>
+<li><a href="#%E8%B4%AA%E5%A9%AA%E4%B8%8E%E9%9D%9E%E8%B4%AA%E5%A9%AA">贪婪与非贪婪</a></li>
+<li><a href="#%E4%BF%AE%E9%A5%B0%E7%AC%A6">修饰符</a>
+<ul>
+<li><a href="#%E8%BD%AC%E4%B9%89%E5%AD%97%E7%AC%A6">转义字符</a></li>
+</ul>
+</li>
+<li><a href="#search">search()</a></li>
+<li><a href="#findall">findall()</a></li>
+<li><a href="#sub">sub()</a></li>
+<li><a href="#compile">compile()</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/python-mongodb/">
+              <h3 class="post-title">
+                python mongoDB
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

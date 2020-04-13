@@ -1,0 +1,296 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HTTP学习笔记 （1）报文头部 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="HTTP学习笔记 （1）报文头部 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="19年有一段时间搞WAF，学习HTTP时的笔记内容，主要学习内容为《HTTP权威指南》以及大名鼎鼎的火狐web文档。
+可以看出来那时候写文档的图画的很糙，很多图甚至还是直接从书里截取的，对比现在使用PPT熟练绘制图片，当时真的是太naive..." />
+    <meta name="keywords" content="学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              HTTP学习笔记 （1）报文头部
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>19年有一段时间搞WAF，学习HTTP时的笔记内容，主要学习内容为《HTTP权威指南》以及大名鼎鼎的<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP">火狐web文档</a>。</p>
+<p>可以看出来那时候写文档的图画的很糙，很多图甚至还是直接从书里截取的，对比现在使用PPT熟练绘制图片，当时真的是太naive了，同时不经感慨，又掌握了一个不知道以后会在什么地方再次用到的技能。</p>
+<h3 id="http头部结构">http头部结构</h3>
+<ol>
+<li>
+<p>起始行：start-line，在request中说明做什么（method），response报文中返回状态code（status-code）</p>
+</li>
+<li>
+<p>Header：0-n个首部字段，包含name和value,中间“：”分隔开，多个首部之间空格进行间隔；一个首部以一个空行符号（CRLF）结束</p>
+</li>
+<li>
+<p>Body：通信的实际数据，一般为text/html类型</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200413222905.png" alt="P1" loading="lazy"></figure>
+<p><strong>Tips：message-body不一定存在，比如get里。</strong></p>
+</li>
+</ol>
+<h3 id="start-line">Start-line</h3>
+<h4 id="request报文">request报文</h4>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200413222839.png" alt="P2" loading="lazy"></figure>
+<p>包含三部分内容，method，request-uri以及http-version。</p>
+<h5 id="method">Method</h5>
+<ol>
+<li>
+<p>Get：向服务器请求资源</p>
+</li>
+<li>
+<p>Put：将来自客户端的数据存储到一个命名空间内，类似ftp将本地的文件上传到http服务器，但是因为http1.1本身不验证put上传者身份，因此很少有http服务器会支持put。</p>
+</li>
+<li>
+<p>Delete：类似put，删除服务器上的某个uri，同样不带验证，很少有服务器支持。</p>
+</li>
+<li>
+<p>Options：查询http服务器上指定uri支持的method。</p>
+</li>
+<li>
+<p>Trace：和tracert原理类似，在header中加入一个max-forwards，每经过一个http proxy -1，当max-forwards值为0的时候返回 200 ok，max-forwards设置不同的值（从1递增）可以查看到中间存在哪些http proxy。</p>
+<p>THE FINAL RECIPIENT OF THE REQUEST  SHOULD REFLECT THE MESSAGE RECEIVED BACK TO THE CLIENT AS THE ENTITY-BODY OF A 200 (OK RESPONSE. THE FINAL RECIPIENT IS EITHER THE ORIGIN SERVER OR THE FIRST PROXY OR GATEWAY TO RECEIVE A MAX-FORWARDS VALUE OF ZERO (0) IN THE REQUEST (SEE SECTION 14.31). A TRACE REQUEST MUST NOT INCLUDE AN ENTITY.<br>
+-------- RFC2616 9.8 TRACE</p>
+</li>
+<li>
+<p>CONNECT：要求HTTP PROXY使用SSL、TLS进行传输，格式：</p>
+<pre><code class="language-http">connect {proxy server name:port}{HTTP version}
+</code></pre>
+<p>connect举例：</p>
+<pre><code class="language-http">CONNECT www.web-tinker.com:80 HTTP/1.1
+Host: www.web-tinker.com:80
+Proxy-Connection: Keep-Alive
+Proxy-Authorization: Basic *
+Content-Length: 0
+</code></pre>
+<p>其中host字段为真正访问的域名，<code>proxy-authorization</code>内为用于和<code>http proxy</code>认证的账号密码，认证通过反馈<code>200 Connection Established</code>（不是ok），失败反馈407，后续的访问和正常http交互一样，只是交互的server是<code>http proxy</code>，不是真正的<code>http server</code>。</p>
+</li>
+<li>
+<p>Post：将客户端数据发送到一个服务器内应用，比如提交登录页面的账号密码Post：将客户端数据发送到一个服务器内应用，比如提交登录页面的账号密码</p>
+</li>
+</ol>
+<h5 id="request-uri">Request-uri</h5>
+<p>命名所请求的资源，或者url完整路径</p>
+<h5 id="http-version">http-version</h5>
+<p>格式如下：</p>
+<pre><code class="language-http">  http/&lt;major&gt;.&lt;minor&gt;
+</code></pre>
+<p>由主要版本和次要版本组成，</p>
+<h4 id="response报文">response报文</h4>
+<p>上面都是http请求报文的start-line，在reponse报文中并不是如此，格式如下：</p>
+<p><code>&lt;version&gt; &lt;status&gt; &lt;reason&gt;</code></p>
+<ol>
+<li>Status：状态码</li>
+<li>Reasone：说明具体原因</li>
+</ol>
+<h3 id="header">Header</h3>
+<p>http协议规定了多种首部，但是完全可以自己定义所需的首部类型；</p>
+<p>格式：</p>
+<pre><code class="language-http">&lt;name&gt;:&lt;value&gt;&lt;空行&gt;
+</code></pre>
+<h4 id="首部分类">首部分类</h4>
+<ol>
+<li>通用首部：请求和回应中都可以出现</li>
+<li>请求首部：提供关于请求的更多详细信息</li>
+<li>响应首部：提供有关更多响应的信息</li>
+<li>实体首部：描述body的内容和长度</li>
+<li>扩展首部：自己定义</li>
+</ol>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200413222920.png" alt="P3" loading="lazy"></figure>
+<p>除了上面常见头部，还有一些常用的扩展头部：<br>
+<code>Cookie</code>，<code>set-cookie</code>，<code>x-forwarded-for</code></p>
+<h4 id="cookie-set-cookie">Cookie、 Set-cookie</h4>
+<p>格式：</p>
+<pre><code class="language-http">Cookie ID: &lt;name&gt;=&lt;value&gt;; expires=&lt;date&gt;; path=&lt;path&gt;; domain=&lt;domain&gt;;
+</code></pre>
+<p>格式说明：</p>
+<ol>
+<li>Name：必选项，服务器可以设置任意的name和value关联</li>
+<li>Expires：可选，超时时间</li>
+<li>Path：可选，url的路径，以此是以此不同目录下url分配不同的cookie</li>
+<li>Domain：可选，主机的domain，限制host只向特定主机发送该cookie</li>
+<li>Secure：可选，只在https中使用该cookie</li>
+</ol>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200413222928.png" alt="P4" loading="lazy"></figure>
+<p>Server发送给client的http报文（200 ok）携带set-cookie，其中携带分配给该客户端的cookie值，之后client发送给server的http报文就会携带该cookie。</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200413222935.png" alt="P5" loading="lazy"></figure>
+<h4 id="x-forwarded-for">X-forwarded-for</h4>
+<p>在某些情况下服务器无法直接通过IP头部获知客户端的IP地址，比如存在http代理服务器或者LB的情况下，此时需要web服务器需要获取客户端真实IP，就需要特殊字段记录客户端IP，这个字段就是x-forwarded-for</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#http%E5%A4%B4%E9%83%A8%E7%BB%93%E6%9E%84">http头部结构</a></li>
+<li><a href="#start-line">Start-line</a>
+<ul>
+<li><a href="#request%E6%8A%A5%E6%96%87">request报文</a>
+<ul>
+<li><a href="#method">Method</a></li>
+<li><a href="#request-uri">Request-uri</a></li>
+<li><a href="#http-version">http-version</a></li>
+</ul>
+</li>
+<li><a href="#response%E6%8A%A5%E6%96%87">response报文</a></li>
+</ul>
+</li>
+<li><a href="#header">Header</a>
+<ul>
+<li><a href="#%E9%A6%96%E9%83%A8%E5%88%86%E7%B1%BB">首部分类</a></li>
+<li><a href="#cookie-set-cookie">Cookie、 Set-cookie</a></li>
+<li><a href="#x-forwarded-for">X-forwarded-for</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/rang-wo-yi-yan-nan-jin-de-nat-1/">
+              <h3 class="post-title">
+                让我一言难尽的NAT (1)
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

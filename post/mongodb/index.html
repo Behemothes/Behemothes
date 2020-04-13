@@ -1,0 +1,526 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mongoDB | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="mongoDB | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="基本概念
+
+
+database
+数据库，基本概念，可以存在多个库，不指定使用的库，默认使用 test。
+
+
+collection
+类似mysql table的概念，一个database类可以存在多个collection。
+
+
+documen..." />
+    <meta name="keywords" content="学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              mongoDB
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h4 id="基本概念">基本概念</h4>
+<ul>
+<li>
+<p>database</p>
+<p>数据库，基本概念，可以存在多个库，不指定使用的库，默认使用 <code>test</code>。</p>
+</li>
+<li>
+<p>collection</p>
+<p>类似mysql table的概念，一个database类可以存在多个collection。</p>
+</li>
+<li>
+<p>document</p>
+<p>类似mysql row概念，数据记录行 文档</p>
+</li>
+<li>
+<p>field</p>
+<p>数据字段</p>
+</li>
+<li>
+<p>index</p>
+<p>索引，mongoDB的id自动生成。</p>
+</li>
+</ul>
+<h4 id="启动mongodb">启动mongoDB</h4>
+<p>将安装路径的 <code>bin</code>加入到环境变量之中，之后直接</p>
+<pre><code class="language-mysql">mongod --dbpath=D:\data\db
+</code></pre>
+<p>其中  <code>--dbpath</code>参数制定了数据库的位置。</p>
+<h4 id="连接到mongodb">连接到mongoDB</h4>
+<ul>
+<li>
+<p>本地连接</p>
+<p>在<code>bin</code>路径下还存在着一个名为<code>mongo</code>的程序，直接<code>mongo</code>就可以连接到本地的数据库。默认端口号<code>27017</code>。</p>
+</li>
+<li>
+<p>网络连接</p>
+<p>标准URI语法：</p>
+<pre><code class="language-mysql">mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+</code></pre>
+</li>
+</ul>
+<h4 id="数据库相关语法">数据库相关语法</h4>
+<ul>
+<li>
+<p>创建数据库</p>
+<p>语法如下</p>
+<pre><code class="language-mysql">use database_name
+</code></pre>
+<p>该语法为切换使用的数据库，如果数据库不存在，会创建数据库。</p>
+</li>
+<li>
+<p>查看当前使用的数据库</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db
+test
+MongoDB Enterprise &gt; use python
+switched to db python
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt; db
+python
+MongoDB Enterprise &gt;
+</code></pre>
+<p>可以看到，在不指定数据库的情况下，默认的数据库就是<code>test</code>,这里的数据库<code>python</code>之前已经创建过，所以可以看到没有再创建的过程。</p>
+</li>
+<li>
+<p>切换数据库</p>
+<p>前面说到，<code>use</code> 就是切换数据库。</p>
+</li>
+<li>
+<p>查看所有数据库</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+</code></pre>
+</li>
+<li>
+<p>删库</p>
+<p><code>db.dropDatabase()</code></p>
+<p>示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+delete  0.000GB
+local   0.000GB
+python  0.000GB
+MongoDB Enterprise &gt; use delete
+switched to db delete
+MongoDB Enterprise &gt; db.dropDatabase()
+{ &quot;dropped&quot; : &quot;delete&quot;, &quot;ok&quot; : 1 }
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+</code></pre>
+<p>可以看到 <code>delete</code>库已经被删除。</p>
+</li>
+<li>
+<p>tips</p>
+<p>数据库创建完立马 <code>show dbs</code>可能会看不到数据库，因为此时并没有 <code>collection</code>在内，此时需要创建 <code>collection</code>并插入数据。</p>
+</li>
+</ul>
+<h4 id="collection相关语法">collection相关语法</h4>
+<ul>
+<li>
+<p>创建collection</p>
+<pre><code class="language-sql">db.creatCollection('d1')
+</code></pre>
+<p>切换到对应的库后，创建一个新的 <code>collection</code></p>
+</li>
+<li>
+<p>查看collection</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; show collections
+python
+spider_taobao
+</code></pre>
+</li>
+<li>
+<p>collection的自动创建</p>
+<p>前面提到创建数据库之后不会立马看到数据库，需要插入数据，插入的方法如下：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; use new
+switched to db new
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+python  0.000GB
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt;
+MongoDB Enterprise &gt; db.new.insert({'title':'v1'})
+WriteResult({ &quot;nInserted&quot; : 1 })
+MongoDB Enterprise &gt; show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+new     0.000GB
+python  0.000GB
+MongoDB Enterprise &gt; show collections
+new
+</code></pre>
+<p>可以看到创建了一个新的数据库 <code>new</code>，此时查看看不到新创建的数据库，插入一个新的数据到<code>new</code>中，此时再查看  <code>show dbs</code>可以看到已经可以看到的新的数据库 <code>new</code>，同时 <code>show collections</code>可以看到新的<code>collection</code>  <code>new</code>。</p>
+</li>
+<li>
+<p>删除collection</p>
+<p>语法：</p>
+<p><code>db.collection_name.drop()</code></p>
+<p>示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.new.drop()
+true
+</code></pre>
+</li>
+</ul>
+<h4 id="文档相关语法">文档相关语法</h4>
+<h5 id="插入文档">插入文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection_name.insert({})
+db.getColleciton('collection_name').insert({})
+db.getColleciton('collection_name').insertOne({})
+db.getCollection('collection_name').insertMany({})
+</code></pre>
+<p>示例：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').insert({'k1':'v1'})
+</code></pre>
+<h5 id="文档的_id">文档的_id</h5>
+<p><code>mongoDB</code>中存在类似<code>mysql</code>唯一主键的ID。默认情况下这个id是自动生成的<code>objectID</code>对象。</p>
+<figure data-type="image" tabindex="1"><img src="C:%5CUsers%5CChris%5CDesktop%5Cid.png" alt="objectID" loading="lazy"></figure>
+<p>该 <code>id</code>组成如下：</p>
+<ol>
+<li>前4个字节代表<strong>unix</strong>时间戳，<strong>UTC</strong>时间，比北京时间晚<strong>8</strong>小时。</li>
+<li>3个字节机器码</li>
+<li>2字节进程<code>PID</code></li>
+<li>最后3个字节，随机数</li>
+</ol>
+<h5 id="save方法"><code>save()</code>方法</h5>
+<p>前面说到唯一主键 <code>_id</code>，<code>save</code>方法可以指定唯一主键，但是如果不指定和<code>insert()</code>效果一样，都是插入新的数据，如果指定了<code>_id</code>字段，则是更新数据。</p>
+<h5 id="更新文档">更新文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection.update(
+   &lt;query&gt;,
+   &lt;update&gt;,
+   {
+     upsert: &lt;boolean&gt;,
+     multi: &lt;boolean&gt;,
+     writeConcern: &lt;document&gt;
+   }
+)
+</code></pre>
+<ul>
+<li>
+<p><query>为查询的条件，可以为其中的某一个值（具体值=，小于、等于，mysql支持的查询，同样都支持）。</p>
+</li>
+<li>
+<p><code>&lt;update&gt;</code>为数据更新的内容。如果不指定更新数据的具体范围，就会对整个符合条件的文档内容修改，示例：</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'1'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30f549a8f6fcee18b6734&quot;), &quot;1&quot; : &quot;1&quot;, &quot;2&quot; : &quot;2&quot; }
+</code></pre>
+<p>查找含有{‘1':'1'}的文档，查看里面内容，还有另外一对值，如果使用以下语法进行<code>update</code>，结果如下：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').update({'1':'1'},{'1':'11'})
+Updated 1 existing record(s) in 2ms
+
+db.getCollection('spider_taobao').find({'1':'11'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30f549a8f6fcee18b6734&quot;), &quot;1&quot; : &quot;11&quot; }
+</code></pre>
+<p>查看更新完的数值，整个document被修改掉了，如果只是想<strong>update</strong>匹配到的数据，应该使用$set在更新的数据前。</p>
+</li>
+<li>
+<p><code>upsert</code>：false or true，如果查找的数据不存在，是否插入新的值。默认该值为false</p>
+</li>
+<li>
+<p><code>multi</code>：替换查找到的第一个值还是多个值，默认该值也是false，即，只更新查找到的第一个值。</p>
+<h5 id="使用set指定更新的文档内容">使用$set指定更新的文档内容</h5>
+<p>直接查看示例</p>
+<pre><code class="language-mysql">MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'10'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30ef69a8f6fcee18b6733&quot;), &quot;1&quot; : &quot;10&quot;, &quot;2&quot; : &quot;2&quot; }
+
+db.getCollection('spider_taobao').update({'1':'10'},{$set:{'1':'20'}},{multi:true})
+
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':'20'}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db30ef69a8f6fcee18b6733&quot;), &quot;1&quot; : &quot;20&quot;, &quot;2&quot; : &quot;2&quot; }
+</code></pre>
+<p>可以看到只有被$set匹配的数据部分内容被修改。</p>
+<p>格式</p>
+<pre><code class="language-mysql">update({query},{$set{update}},{multi:ture})
+</code></pre>
+</li>
+</ul>
+<h5 id="删除文档">删除文档</h5>
+<p>语法：</p>
+<pre><code class="language-mysql">db.collection_name.remove(&lt;query&gt;,&lt;justone&gt;)
+</code></pre>
+<p><justone>:是否只删除一个参数，默认为false，代表默认删除所有匹配到的数据。</p>
+<p>示例：</p>
+<pre><code>db.getCollection('spider_taobao').remove({'1':{$gte:10,$lte:15}})
+</code></pre>
+<p>删除'1'，范围大于等于10，小于等于15的<strong>document</strong>。</p>
+<p>推荐的语法：</p>
+<pre><code>db.collection_name.deleteOne()
+
+db.collection_name.deleteMany()
+</code></pre>
+<p>示例：</p>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').insertOne({'1':21})   #插入一个新的数据
+
+此时存在两条数据：
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':{$gt:9}}).pretty()
+{ &quot;_id&quot; : ObjectId(&quot;5db317b67fb04e83dc59f7f8&quot;), &quot;1&quot; : 20 }
+{ &quot;_id&quot; : ObjectId(&quot;5db317e69a8f6fcee18b6735&quot;), &quot;1&quot; : 21 }
+
+删除：
+MongoDB Enterprise &gt; db.getCollection('spider_taobao').deleteMany({'1':{$gte:20}})
+{ &quot;acknowledged&quot; : true, &quot;deletedCount&quot; : 2 }
+</code></pre>
+<p>可以看到成功删除两条document</p>
+<h5 id="查询文档">查询文档</h5>
+<h6 id="and查询">and查询</h6>
+<pre><code>db.getCollection('spider_taobao').find({'1':20,'2':21})
+</code></pre>
+<p>分隔号分隔开，此时就是常规的<strong>AND</strong>查询</p>
+<p>示例：</p>
+<pre><code>MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({'1':20,'1':'21'})
+{ &quot;_id&quot; : ObjectId(&quot;5db31a3c1e2499fa1cc08fd8&quot;), &quot;1&quot; : &quot;21&quot; }
+</code></pre>
+<h6 id="or查询">or查询</h6>
+<p>语法：</p>
+<pre><code class="language-mysql">&gt;db.col.find(
+   {
+      $or: [
+         {key1: value1}, {key2:value2}
+      ]
+   }
+).pretty()
+</code></pre>
+<p>使用 <code>or[{}，{}]</code>的形式。</p>
+<p>示例：</p>
+<pre><code>MongoDB Enterprise &gt; db.getCollection('spider_taobao').find({$or:[{'1':'21'},{'1':20
+...     }]})
+{ &quot;_id&quot; : ObjectId(&quot;5db31a3c1e2499fa1cc08fd8&quot;), &quot;1&quot; : &quot;21&quot; }
+{ &quot;_id&quot; : ObjectId(&quot;5db31b369a8f6fcee18b6736&quot;), &quot;1&quot; : 20 }
+</code></pre>
+<p>查询所有：</p>
+<pre><code>db.col.find({}).pretty()
+</code></pre>
+<h5 id="条件操作符">条件操作符</h5>
+<p><code>mongoDB</code>同样支持常见的文件操作符。</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$gt</td>
+<td>大于</td>
+</tr>
+<tr>
+<td>$lt</td>
+<td>小于</td>
+</tr>
+<tr>
+<td>$gte</td>
+<td>大于等于</td>
+</tr>
+<tr>
+<td>$lte</td>
+<td>小于等于</td>
+</tr>
+</tbody>
+</table>
+<h5 id="统计">统计</h5>
+<pre><code class="language-mysql">db.getCollection('spider_taobao').find({}).count()
+</code></pre>
+<p>统计多少个</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">基本概念</a></li>
+<li><a href="#%E5%90%AF%E5%8A%A8mongodb">启动mongoDB</a></li>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E5%88%B0mongodb">连接到mongoDB</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9B%B8%E5%85%B3%E8%AF%AD%E6%B3%95">数据库相关语法</a></li>
+<li><a href="#collection%E7%9B%B8%E5%85%B3%E8%AF%AD%E6%B3%95">collection相关语法</a></li>
+<li><a href="#%E6%96%87%E6%A1%A3%E7%9B%B8%E5%85%B3%E8%AF%AD%E6%B3%95">文档相关语法</a>
+<ul>
+<li><a href="#%E6%8F%92%E5%85%A5%E6%96%87%E6%A1%A3">插入文档</a></li>
+<li><a href="#%E6%96%87%E6%A1%A3%E7%9A%84_id">文档的_id</a></li>
+<li><a href="#save%E6%96%B9%E6%B3%95"><code>save()</code>方法</a></li>
+<li><a href="#%E6%9B%B4%E6%96%B0%E6%96%87%E6%A1%A3">更新文档</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8set%E6%8C%87%E5%AE%9A%E6%9B%B4%E6%96%B0%E7%9A%84%E6%96%87%E6%A1%A3%E5%86%85%E5%AE%B9">使用$set指定更新的文档内容</a></li>
+<li><a href="#%E5%88%A0%E9%99%A4%E6%96%87%E6%A1%A3">删除文档</a></li>
+<li><a href="#%E6%9F%A5%E8%AF%A2%E6%96%87%E6%A1%A3">查询文档</a>
+<ul>
+<li><a href="#and%E6%9F%A5%E8%AF%A2">and查询</a></li>
+<li><a href="#or%E6%9F%A5%E8%AF%A2">or查询</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9D%A1%E4%BB%B6%E6%93%8D%E4%BD%9C%E7%AC%A6">条件操作符</a></li>
+<li><a href="#%E7%BB%9F%E8%AE%A1">统计</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/tsharkpyshark-xue-xi-bi-ji/">
+              <h3 class="post-title">
+                Tshark、pyshark学习笔记
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

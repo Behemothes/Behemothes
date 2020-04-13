@@ -1,0 +1,304 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ACG WEB认证成功跳转页面原理 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="ACG WEB认证成功跳转页面原理 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="概述：
+小伙伴说遇到了一个问题，有个客户ACG（Application Control Gateway，某司的上网行为审计设备）本地Web认证成功之后无法跳转到设置的成功跳转页面，看了实验室成功的抓包发现不是通过HTTP 302 跳转的，不..." />
+    <meta name="keywords" content="HTTP,TroubleShooting" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              ACG WEB认证成功跳转页面原理
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/OokhMm6Qv/" class="post-tag">
+                  # HTTP
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/4J8Zg2iT1/" class="post-tag">
+                  # TroubleShooting
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h4 id="概述">概述：</h4>
+<p>小伙伴说遇到了一个问题，有个客户ACG（Application Control Gateway，某司的上网行为审计设备）本地Web认证成功之后无法跳转到设置的成功跳转页面，看了实验室成功的抓包发现不是通过HTTP 302 跳转的，不知道具体什么跳转原理也无从排查，我看了下正常跳转的报文交互，以及从Wireshark下看HTTP传输的JS页面源码，发现还是挺有趣的。</p>
+<p>先看结论：<br>
+ACG在本地web认证成功之后不是通过<code>http 302、Location header</code>方式执行页面跳转。</p>
+<p>ACG在进行认证页面跳转的时候发送<code>302 Location</code>，<code>Location</code>的url携带了参数：<code>weburl</code>，通过该参数携带了认证成功之后跳转的地址，之后通过js脚本在浏览器侧判断是否认证成功、并执行跳转。</p>
+<figure data-type="image" tabindex="1"><img src="https://upload-images.jianshu.io/upload_images/5735108-a52be61b313c26ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image" loading="lazy"></figure>
+<p>所以想要跳转成功：</p>
+<p>1. ACG给PC <code>302 location</code>重定向的url中需要携带<code>weburl</code>这个参数，携带的地址也得正确</p>
+<p>2. PC的浏览器可以正常执行<code>JS</code>脚本。</p>
+<p>可以自己新建一个html文件用浏览器打开测试下，是否可以正常执行JS的跳转：</p>
+<pre><code class="language-html">
+&lt;!DOCTYPE html&gt;
+
+&lt;html&gt;
+
+&lt;body&gt;
+
+&lt;form &gt;
+
+&lt;input type=&quot;button&quot; value=&quot;JS window open跳转&quot;  onclick=&quot;javascript:window.open('http://www.baidu.com')&quot;&gt;
+
+&lt;/form&gt;
+
+&lt;p&gt;点击submit，打开baidu&lt;/p&gt;
+
+&lt;/body&gt;
+
+&lt;/html&gt;
+
+</code></pre>
+<p>下面部分不感兴趣可以不用看了。</p>
+<h4 id="页面代码中相关">页面代码中相关</h4>
+<ul>
+<li>
+<p>点击认证时候的ajax部分</p>
+</li>
+<li>
+<p>执行跳转页面的function</p>
+</li>
+<li>
+<p>获取跳转页面的function</p>
+</li>
+</ul>
+<h6 id="获取跳转页面url的function">获取跳转页面url的function</h6>
+<pre><code class="language-javascript">
+function get_url_special_string(name){
+
+    var reg = new RegExp(&quot;(^|&amp;)&quot;+ name +&quot;=([^&amp;]*)(&amp;|$)&quot;);
+
+    var r = window.location.search.substr(1).match(reg);
+
+    if(r!=null)return  unescape(r[2]); return null;
+
+}
+
+</code></pre>
+<p>这段代码百度上很容易找到解释：<a href="https://www.jianshu.com/p/f988e4ebd627">链接</a>。甚至代码都一毛一样（除了函数名字不一样），一个字都没改，<code>ctrl c、ctrl v</code>大法赛高。<br>
+该函数作用是获取 <code>http</code>请求的<code>url</code>中<code>？</code>后边的部分，也就是<code>url</code>中携带的参数。</p>
+<p>整个认证过程中<code>http</code>头部携带的参数就只有一个：<code>weburl</code>。</p>
+<pre><code class="language-http">GET /portal/local/index.html?weburl=http%3A%2F%2F1.1.1.2 HTTP/1.1
+</code></pre>
+<p>最开始我以为这个<code>weburl</code>作用是表明ACG认证页面是从哪个原始地址跳转过来的，但是看代码似乎并不是，而是表明认证成功之后跳转的页面。</p>
+<p>想想也是，ACG全程在url参数中携带认证之前的url地址干啥，认证之后又不会给跳转回去.....，主要这个抓包里认证前访问的地址刚好也是1.1.1.2，跳转页面也是1.1.1.2，容易让人误解。</p>
+<h6 id="执行跳转页面的function">执行跳转页面的function</h6>
+<pre><code class="language-javascript">
+function btn_win_open(url){
+
+  if(url !='null'){
+
+      $('#redirect').unbind();
+
+      $('#redirect').click(function(){window.open(url)});
+
+      $(&quot;#redirect&quot;).trigger(&quot;click&quot;);
+
+  }
+
+}
+
+</code></pre>
+<p>传入一个url，通过<code>window.open(url)</code>在浏览器中打开这个url，也就是所谓的页面跳转。</p>
+<h6 id="点击认证时候的ajax部分">点击认证时候的ajax部分</h6>
+<pre><code class="language-javascript">
+$.ajax({
+
+        url: '../../portal.cgi',
+
+        type: 'POST',
+
+        data: 'username=' + encodeURI(username) + '&amp;password=' + password +'&amp;language='+language+ '&amp;submit=submit'
+
+        async: false,
+
+        timeout: 30000,
+
+        success: function(data) {
+
+            var weburl = decodeURIComponent(get_url_special_string(&quot;weburl&quot;)),logincookie= '';
+
+
+                     if(weburl){
+
+                                btn_win_open(weburl);
+
+                    if(weburl){
+
+                        btn_win_open(weburl);
+
+}
+
+</code></pre>
+<p>向<code>/portal.cgi</code>提交认证的账号密码，中间省略一堆内容，如果认证成功（success），执行一个函数，在函数中存在一个判断条件：</p>
+<p><code>if(weburl)</code></p>
+<p>也就是<code>weburl</code>如果存在，执行 <code>btn_win_open</code>函数，也就是跳转页面的函数，完成认证成功后跳转到页面的功能。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述：</a></li>
+<li><a href="#%E9%A1%B5%E9%9D%A2%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9B%B8%E5%85%B3">页面代码中相关</a><br>
+*
+<ul>
+<li><a href="#%E8%8E%B7%E5%8F%96%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2url%E7%9A%84function">获取跳转页面url的function</a></li>
+<li><a href="#%E6%89%A7%E8%A1%8C%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2%E7%9A%84function">执行跳转页面的function</a></li>
+<li><a href="#%E7%82%B9%E5%87%BB%E8%AE%A4%E8%AF%81%E6%97%B6%E5%80%99%E7%9A%84ajax%E9%83%A8%E5%88%86">点击认证时候的ajax部分</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/python-zi-fu-wen-ti/">
+              <h3 class="post-title">
+                 python字符问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

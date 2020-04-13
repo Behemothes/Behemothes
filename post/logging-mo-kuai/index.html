@@ -1,0 +1,429 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>logging模块 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="logging模块 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="概述
+用于记录日志信息的模块，可以提供非常完善的信息记录，以及可定义的记录方式。
+模块结构
+
+logger
+logger main class，记录日志时创建的对象。
+handler
+简单理解为定义将日志输出到何处，输出到stream、fi..." />
+    <meta name="keywords" content="Python,学习笔记" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              logging模块
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/XeNb5S4Sy/" class="post-tag">
+                  # Python
+                </a>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/pSoYiLnSD/" class="post-tag">
+                  # 学习笔记
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="概述">概述</h2>
+<p>用于记录日志信息的模块，可以提供非常完善的信息记录，以及可定义的记录方式。</p>
+<h2 id="模块结构">模块结构</h2>
+<ul>
+<li>logger<br>
+logger main class，记录日志时创建的对象。</li>
+<li>handler<br>
+简单理解为定义将日志输出到何处，输出到<code>stream</code>、<code>file</code>还是通过<code>socket</code>到<code>http</code>服务器</li>
+<li>formatter<br>
+logging 支持强大的自定义日志格式，就是通过该部分实现</li>
+<li>filter<br>
+过滤日志，只保留想要的日志</li>
+</ul>
+<h2 id="基本用法">基本用法</h2>
+<pre><code class="language-python">import logging
+
+logging.basicConfig(filename='log.log',
+                    filemode = 'w',
+                    level=logging.INFO,
+                    format = '%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s',
+                    datefmt='%Y%m%d %H:%M:%S ',
+                    )
+logger = logging.getLogger(__name__)
+
+logger.info('this is a log info')
+logger.debug('this debug info will not be show')
+logger.warning('warning info')
+logger.info('finish')
+</code></pre>
+<ul>
+<li>basicConfig<br>
+可以设置一些logging输出的内容。</li>
+</ul>
+<ol>
+<li>filename<br>
+将日志输出到文件，指定文件名</li>
+<li>filemode<br>
+追加模式<code>a</code>，还是写模式<code>w</code></li>
+<li>format<br>
+前面说到logging支持强大的自定义日志格式，即是通过<code>format</code> 实现。format可以指定的常见格式如下：<br>
+%(levelno)s：打印日志级别的数值。<br>
+%(levelname)s：打印日志级别的名称。<br>
+%(pathname)s：打印当前执行程序的路径，其实就是sys.argv[0]<br>
+%(filename)s：打印当前执行程序名。<br>
+%(funcName)s：打印日志的当前函数。<br>
+%(lineno)d：打印日志的当前行号。<br>
+%(asctime)s：打印日志的时间。<br>
+%(thread)d：打印线程ID。<br>
+%(threadName)s：打印线程名称。<br>
+%(process)d：打印进程ID。<br>
+%(processName)s：打印线程名称。<br>
+%(module)s：打印模块名称。<br>
+%(message)s：打印日志信息。</li>
+<li>datefmt<br>
+指定时间输出的格式</li>
+<li>style<br>
+指定format参数里的占位符，默认是<code>%</code>，可以修改为其它</li>
+<li>level<br>
+指定日志的输出级别，之后只能输出日志级别比它好的级别日志，日志级别详细见后。</li>
+</ol>
+<h2 id="日志级别">日志级别</h2>
+<p>这里的日志级别和网络设备的7个级别还不一样，<code>debug</code>不是最高级别，相反级别还很低，同时级别拥有优先级数值。<br>
+| level | 数值（优先级）|<br>
+|CRITICAL | 50 |<br>
+|FATAL | 50 |<br>
+| ERROR | 40 |<br>
+|WARNING | 30 |<br>
+|INFO | 20|<br>
+|DEBUG | 10 |<br>
+| NOTEST | 0 |</p>
+<p>可以看到很多熟悉的日志级别，只是优先级和之前网络设备的1-7级不一样，在basicConfig指定对应级别之后，只会输出优先级大于等于<br>
+该级别的日志。</p>
+<pre><code class="language-python">import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level = logging.DEBUG)
+
+logger.info('this is a log info')
+logger.debug('this debug info will not be show')
+logger.warning('warning info')
+logger.info('finish')
+</code></pre>
+<p>通过<code>getLogger</code>实例化一个对象 <code>logger</code>之后，设置日志等级为<code>DEBUG</code>，这样就可以限制只有日志等级<code>DEBUG</code>之上的才会输出。</p>
+<h2 id="handler">handler</h2>
+<p>用法：</p>
+<pre><code class="language-python">import logging
+
+logger = logging.getLogger(__name__)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s') #使用Formatter定义for
+# mat
+handler = logging.FileHandler('output.log') #初始化文件handler
+handler.setFormatter(formatter)              #设置handler的format
+logger.addHandler(handler)                   #将handler添加到logger
+
+logger.info('this is a log info')
+</code></pre>
+<p>将<code>basicConfig</code>的参数拆分开。<br>
+使用<code>Formatter</code>实例化<code>format</code>，使用<code>Filehandler</code>初始化<code>handler</code>，<code>setFormatter</code>给<code>handler</code>设置<code>format</code>，最后使用<br>
+<code>addHandler</code>添加到实例化对象 <code>logger</code> 中 。</p>
+<ul>
+<li>常见的handler</li>
+</ul>
+<ol>
+<li>控制台（stdout）</li>
+</ol>
+<pre><code class="language-python">import logging
+import sys
+
+stream_handler = logging.StreamHandler(sys.stdout)  #控制台handler
+</code></pre>
+<ol start="2">
+<li>文件</li>
+</ol>
+<pre><code class="language-python">import logging
+handler = logging.FileHandler('output.log') #初始化文件handler
+</code></pre>
+<ol start="3">
+<li>http服务器</li>
+</ol>
+<pre><code class="language-python">import logging
+from logging.handlers import  HTTPHandler
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level= logging.DEBUG)
+
+log_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s')
+
+http_handler = HTTPHandler(host='192.168.1.1',url='log/upload',method='POST') #初始化http方式的handler
+
+http_handler.formatter(log_format)
+logger.addHandler(http_handler)
+</code></pre>
+<h2 id="formatter">formatter</h2>
+<p>前面的示例里已经详细地展示了<code>logging.Formatter</code>，<code>.formatter</code>如何使用。先初始化实例，之后通过<code>formatter</code>设置<code>hanlder</code></p>
+<h2 id="捕获traceback">捕获traceback</h2>
+<p>报错时展示详细的traceback信息，便于调试。</p>
+<pre><code class="language-python">import logging
+
+logger.info('follow is traceback')
+try:
+    result = 10/0
+except Exception:
+    logger.error('Faild info',exc_info = True)
+</code></pre>
+<p>设置 <code>exc_info = True</code>,打印调试信息。执行结果如下:<br>
+<code>Traceback (most recent call last): File &quot;C:/Users/Chris/PycharmProjects/scapy/ÿ��һ��python��׼��/logging_module/loggin_learning.py&quot;, line 24, in &lt;module&gt; result = 10/0 ZeroDivisionError: division by zero</code></p>
+<h2 id="格式化输出">格式化输出</h2>
+<p><code>logging</code>本身输出支持字符串格式化，不建议再使用<code>format</code>、<code>f</code>。</p>
+<pre><code class="language-python">import logging
+
+logger.info('Dio\'s stand is %s %s','The','World!')
+</code></pre>
+<p>输出结果:<br>
+<code>2019-10-08 23:47:40,836 - __main__ - INFO - 20 - Dio's stand is The World!</code></p>
+<h2 id="日志过滤">日志过滤</h2>
+<p>日志过滤通过<code>logging.Filter</code>类来实现，其源码不是特别复杂，可以看下：</p>
+<pre><code class="language-python">class Filter(object):
+    def __init__(self, name=''):
+        self.name = name
+        self.nlen = len(name)
+
+    def filter(self, record):
+        if self.nlen == 0:
+            return True
+        elif self.name == record.name:
+            return True
+        elif record.name.find(self.name, 0, self.nlen) != 0:
+            return False
+        return (record.name[self.nlen] == &quot;.&quot;)
+</code></pre>
+<ul>
+<li>Filter示例化时传入参数<code>name</code>,字符串类型，将name的长度赋予<code>nlen</code></li>
+<li>定义filter函数，参数<code>record</code>，返回结果为<code>True</code>的话表示通过过滤，会继续显示，而返回结果<code>False</code>表示不通过过滤，不显示。</li>
+</ul>
+<p>总结：<code>filter</code>函数返回<code>True</code>能继续显示，返回<code>False</code>不会再显示。</p>
+<p>示例：</p>
+<pre><code class="language-python">import logging
+
+class DIO_filter(logging.Filter):
+    def filter(self,record):
+        try:
+        #try信息将record的filter_task赋值给filter_key，这个filter_task是通过extra = ‘’附加上的。
+            filter_key = record.filter_task
+        except AttributeError:
+        #没有record.filter_task的会被过滤
+            return False
+            
+        if filter_key == 'Dio':
+        #如果存在返回True，不存在返回False
+            return True
+        else:
+            retrun False
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DBEUG)
+
+handler = logging.StreamHandler()
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(levelno)s - %(message)s')
+
+#实例DIO-filter
+msg_filter = DIO_filter()
+
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+
+#给logger添加filter
+logger.addFilter(msg_filter)
+
+#给extra用的filter_dict
+filter_dict = {'filter_task':'Dio'}
+
+logger.info('Dio\'s stand is %s %s','The','World!',extra = filter_dict)
+logger.error('this is filter test')
+
+执行结果：
+2019-10-09 23:24:24,386 - __main__ - INFO - 20 - Dio's stand is The World!
+第二条不会显示
+</code></pre>
+<p>但是上面让正常没有<code>extra</code>的直接因为<code>AttributeError</code>全被过滤掉。<br>
+使用<code>getMessage()</code>比较正常点。</p>
+<p><code>getMessage()</code> 源码</p>
+<pre><code class="language-python">def getMessage(self):
+    msg = str(self.msg)
+    if self.args:
+        msg = msg % self.args
+    return msg
+</code></pre>
+<p>返回日志，这样可以判断要过滤的<code>str</code>在不在日志正文中即可。<br>
+写法：</p>
+<pre><code class="language-python">class DIO_Filter(logging.Filter):
+    def filter(self, record):
+        filter_key = record.getMessage()
+
+        if 'Dio' in filter_key:
+            return True
+        else:
+            return False
+</code></pre>
+<p>同时如果想过滤，只是不显示含有<code>Dio</code>的，把返回的<code>True</code> <code>False</code>顺序互反即可</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E6%A8%A1%E5%9D%97%E7%BB%93%E6%9E%84">模块结构</a></li>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E7%94%A8%E6%B3%95">基本用法</a></li>
+<li><a href="#%E6%97%A5%E5%BF%97%E7%BA%A7%E5%88%AB">日志级别</a></li>
+<li><a href="#handler">handler</a></li>
+<li><a href="#formatter">formatter</a></li>
+<li><a href="#%E6%8D%95%E8%8E%B7traceback">捕获traceback</a></li>
+<li><a href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E8%BE%93%E5%87%BA">格式化输出</a></li>
+<li><a href="#%E6%97%A5%E5%BF%97%E8%BF%87%E6%BB%A4">日志过滤</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/python-zheng-ze-biao-da-shi/">
+              <h3 class="post-title">
+                python 正则表达式-re
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

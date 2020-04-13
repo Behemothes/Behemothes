@@ -1,0 +1,373 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SSLVPN TCP方式的一个小细节问题 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586790746854">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="SSLVPN TCP方式的一个小细节问题 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="前言
+SSLVPN现在用的挺多的，比如我现在就通过SSLVPN连着公司内网，很多公司选择远程接入VPN时也会选择SSLVPN，毕竟方便，只要有个浏览器就能用，不用装客户端，不像PPTP遇见NAT(NAPT严格来说，不过现在基本都是NAPT)..." />
+    <meta name="keywords" content="技术杂谈" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586790746854" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              SSLVPN TCP方式的一个小细节问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-13
+              </span>
+              <span>
+                14 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/ERd1sKPdu/" class="post-tag">
+                  # 技术杂谈
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="前言">前言</h3>
+<p>SSLVPN现在用的挺多的，比如我现在就通过SSLVPN连着公司内网，很多公司选择远程接入VPN时也会选择SSLVPN，毕竟方便，只要有个浏览器就能用，不用装客户端，不像PPTP遇见NAT(NAPT严格来说，不过现在基本都是NAPT)还得愁里面的GRE怎么过NAT；也不像L2TP VPN不结合IPsec VPN使用windows自带客户端还得改注册表（早期win7）。</p>
+<p>这么看SSLVPN挺完美的。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200411152359.png" alt="" loading="lazy"></figure>
+<p>至少理想中SSLVPN很完美，不知道大家还记不记得最开始接触SSLVPN时很多培训教材或者书籍里提到的SSLVPN特点，不外乎以下：</p>
+<ol>
+<li>无需安装客户端</li>
+<li>只需要浏览器就可以访问，方便，B/S构建</li>
+<li>随时随地接入，手机就可以</li>
+<li>加密、安全性好</li>
+</ol>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200411152433.png" alt="" loading="lazy"></figure>
+<p>但实际，除了第四点，其它三点就有点不是那么100%正确了，接触过SSLVPN大家就会发现，SSLVPN怎么还分三种模式：</p>
+<ol>
+<li>WEB接入</li>
+<li>TCP接入方式（H记叫做端口转发）</li>
+<li>IP方式（H记叫做网络扩展）</li>
+</ol>
+<p>除了第一种方式是真的无需客户端、浏览器就可以，是理想中的SSLVPN，其它的方式还需要安装浏览器插件、甚至还需要装客户端（IP方式）。<br>
+那可能就有人觉得那就使用WEB接入方式不就行了没，多美好。<br>
+Too young，事情要真是那么简单世界就真的很美好了。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200411152447.png" alt="" loading="lazy"></figure>
+<p>实际使用中很多时候WEB接入方式因为涉及改写HTTP头部，而国内很多客户的网站代码写的真的是一言难尽…….</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200411152500.png" alt="" loading="lazy"></figure>
+<p>此时就非常考验厂家对HTTP头部的改写能力了，应用层开发能力弱的厂家，那就很容易扑GAI了:改写失败，HTTP访问各种异常，业内很典型的，我就不想提我的那位老东家的SSLVPN WEB接入方式做的有多烂了。</p>
+<p>所以实际情况还是当WEB接入方式搞不定时只能选择IP接入方式或者TCP接入方式，那么让人困惑的点马上就来了。</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200411152511.png" alt="" loading="lazy"></figure>
+<h3 id="费解的tcp接入方式">费解的TCP接入方式</h3>
+<h4 id="不止一次被人问到">不止一次被人问到</h4>
+<p>既然简单好用、“完美”的WEB接入方式不是啥时候都好使，那大家肯定得好好研究另外两种方式了，一研究发现，嘿，需要客户端的SSLVPN IP接入方式不就是一层IP头部套一层IP头部吗，中间多了个SSLVPN，和GRE、IPsec VPN这些封装上没什么区别啊，easy，作为一名经验十足的工程师分分钟搞定。</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200411152524.png" alt="" loading="lazy"></figure>
+<p>然后转过身看TCP方式：我擦，这报文怎么过去的啊，搞不懂。</p>
+<p>讲真，TCP接入方式和传统数通里经常搞的VPN比起来，是有点不好理解。</p>
+<p>我曾经不止一次给别人讲TCP方式的大概实现原理：</p>
+<ol>
+<li>当TAC技术支持专家时，一个关系很好的一线同事和我说，他看了官网上讲解TCP接入方式的文章，还是看不懂…..让我给讲讲</li>
+<li>前几个月一个新员工答辩时选题 SSLVPN ，然后讲了TCP接入方式，我问了点细节，然后发现他完全不懂TCP接入。</li>
+<li>再给这个新员工讲解时发现负责IE-security面试的两个考官同事也不懂（没多少实际经验）。于是给他们新人、老人一起讲了。</li>
+</ol>
+<h4 id="为啥是tcp接入方式">为啥是TCP接入方式</h4>
+<ol>
+<li>
+<p>WEB接入方式</p>
+<p>完全应用层HTTP头部改写实现VPN访问内网WEB资源，很多只是搞网络的同事没接触过HTTP，所以对HTTP不了解，对于WEB接入方式实现挺多一句：改写HTTP头部实现的。再深入了解的就没了，在深入确实也不是传统意义上网工的范围了。<br>
+当然做为一名优秀的网工还是应该学习哈HTTP的，毕竟应用负载均衡还是需要很多HTTP知识作为知识支撑的，这我觉得并没有超出一名网工的范围。</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200411152537.png" alt="" loading="lazy"></figure>
+<p>而且使用HTTP改写头部的方式出了问题，除了找研发看HTTP网页源码，网络工程师能参与的事也很少，所以自然而然WEB方式大家也就很少有问题了，毕竟有问题…….也不是我们能解决的。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200411152549.png" alt="" loading="lazy"></figure>
+</li>
+<li>
+<p>IP接入方式</p>
+<p>讲真，作为一名经验十足、技术扎实的网工，我不信看懂IP接入方式时会有多难理解，一层IP头部套一层IP头部，非常经典的VPN了，和GRE、IPsec VPN（tunnel mode）、L2TP VPN....真的一模一样。</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200411152615.png" alt="" loading="lazy"></figure>
+</li>
+</ol>
+<h3 id="好好看看sslvpn-tcp接入方式">好好看看SSLVPN TCP接入方式</h3>
+<h4 id="难在哪儿">难在哪儿</h4>
+<p>既然觉得难以理解，那今天就看看具体难在哪，哪儿不理解。<br>
+然后我发现，很多人对于从客户端到SSLVPN设备怎么传输原始报文里网络层信息、传输层信息不理解。<br>
+还有的吗，那是从头到位都不理解。</p>
+<h4 id="tcp接入方式从头到位的流程">TCP接入方式从头到位的流程</h4>
+<p>既然不理解，那就好好看看这个过程，下面用<code>一幅图</code> 简单梳理下：</p>
+<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200411153025.png" alt="" loading="lazy"></figure>
+<p>看了上面的图，很多人估计还是表示一头雾水，确实很多细节都没有体现，比如：</p>
+<ol>
+<li>本地小插件是啥？</li>
+<li>本地小插件咋劫持TCP连接的啊?</li>
+<li>小插件只是把原始报文data发给SSLVPN设备了，网络层头部、传输层头部信息都丢了，SSLVPN设备怎么知道发给inside server的啊？</li>
+</ol>
+<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200411153212.png" alt="P11" loading="lazy"></figure>
+<h4 id="本地不只是一个浏览器">本地不只是一个浏览器</h4>
+<p>TCP接入方式使用过的人应该知道，基本都会要求active插件或者别的插件（如java插件）。安装完之后在电脑右下角就会出现小图标，这个虽然不是像客户端那样在本地装了个软件，但实际这个小插件的功能已经完全脱离浏览器了。</p>
+<p>让我们从头回忆TCP接入方式时我们会做的事：</p>
+<ol>
+<li>打开SSLVPN的登录地址，这里我们假设是100.1.2.3:8443。</li>
+<li>输入账号密码，登入页面，点击TCP访问资源，这时让你下载插件，点击安装并运行。</li>
+<li>安装完之后手动打开软件访问对应的内网服务器IP+端口，可能是访问内网某个WEB服务器，就如上图，假设我们的访问是手动在浏览器内输入http://192.168.1.100:80。</li>
+</ol>
+<p>第二步，当我们安装完小插件并运行之后，这个小插件就已经在后台监听本地发起的TCP连接，监听哪些呢？当然是我们在SSLVPN上配置的可以访问的TCP资源里的：IP地址+端口号，本例中那就是192.168.1.100:80。</p>
+<p>第三步，我们再浏览器内输入http://192.168.1.100:80，并且按下enter键，此时SSLVPN终端（也就是我们的电脑）会向192.168.1.100发起一个TCP SYN已建立三次握手，查找路由表肯定只能找到默认路由扔给网关，然后电脑就构造报文准备发网关了。</p>
+<p>但实际这个报文并不会离开终端，而是在本地被后台运行的小插件劫持了。</p>
+<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200411153315.png" alt="P12" loading="lazy"></figure>
+<p>虽然小插件并没有192.168.1.100这个IP地址，也没有在本地监听80端口，但是人家可以伪造报文啊。</p>
+<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200411153350.png" alt="P13" loading="lazy"></figure>
+<p>小插件劫持了发往192.168.1.100的TCP SYN报文，并伪装成192.168.1.100回应SYN ACK给本地网卡，但是这里小插件也不是无中生有，而是在本地使用环回口地址监听了一个80+1024端口（H记做法），毕竟是要伪装192.168.1.100和客户端建立三次握手的，虽然是伪装，但这个连接还是存在的，毕竟还是要符合基本法的。</p>
+<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200411153409.png" alt="P14" loading="lazy"></figure>
+<h4 id="为什么不直接用80端口">为什么不直接用80端口</h4>
+<p>有人可能就有疑问，为什么不直接用环回口的80端口作为伪装劫持用的监听端口呢</p>
+<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200411153442.png" alt="P15" loading="lazy"></figure>
+<p>好问题。</p>
+<p>答案也很简单，如果这样就直接占用了本地的80端口，本地如果其他软件也要使用80端口就直接提示端口被占用了，而且这个几率还挺高。</p>
+<p>不是说本地会跑什么apache、tomacat、HFS之类软件的几率很高，而是SSLVPN访问的TCP资源一般都是1024以下的知名端口（毕竟通过VPN访问，内网非映射出去，很多直接都是默认端口，什么FTP 21、SSH 22）。</p>
+<p>本地开放这些知名端口的可能性还是很高的，比如我们网工本地开个3CD很正常，但是如果你用SSLVPN访问某个内网的FTP服务器，然后本地小插件使用环回口的21监听了你对内网FTP服务器的访问，相信我，不找原厂400你可能半天找不到3CD提示端口占用的原因，然后找到原因后骂一句，SB厂家。</p>
+<p>甚至很多我觉得原厂400都不一定知道为什么……..。</p>
+<p>所以不用用户真正访问目的端口作为本地监听的劫持端口，而是1024+访问目的端口作为监听端口挺好的，反正小插件是伪造报文回应，没必要真的监听访问目的端口，人家只是在骗你，没必要那么较真。</p>
+<figure data-type="image" tabindex="16"><img src="http://www.behemoth.icu/img/20200411153451.png" alt="P16" loading="lazy"></figure>
+<h4 id="劫持完毕发送真的数据">劫持完毕，发送真的数据</h4>
+<p>好了，小插件伪装成192.168.1.100回应TCP SYN ACK了，之后就是终端回应TCP ACK完成三次握手了，这里我相信我不画图大家都能理解。</p>
+<figure data-type="image" tabindex="17"><img src="http://www.behemoth.icu/img/20200412231127.png" alt="P17" loading="lazy"></figure>
+<p>算了，还是画个图，反正改个箭头的事</p>
+<p>（BTW，我觉得我用的随机源端口64512非常有情怀，老网工了。）</p>
+<p>接下来，了解HTTP访问流程的人肯定知道，浏览器要发送HTTP GET请求了。<br>
+（不了解的也没事，现在你知道了）。</p>
+<figure data-type="image" tabindex="18"><img src="http://www.behemoth.icu/img/20200412231140.png" alt="P18" loading="lazy"></figure>
+<p>在这里应用层的数据我是用HTTP GET表示。我们现在终于进入到 一幅图 里的第2步了。<br>
+在这里我们先看下小插件发给SSLVPN设备的报文长什么样：</p>
+<figure data-type="image" tabindex="19"><img src="http://www.behemoth.icu/img/20200412231148.png" alt="P19" loading="lazy"></figure>
+<p>源目IP是从客户端到SSLVPN设备的，源目端口也是客户端从SSLVPN设备的，在上面就是SSL，在里面就是被SSL加密的数据了，下面用DATA表示SSL内加密的数据。</p>
+<figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412231156.png" alt="P20" loading="lazy"></figure>
+<p>到这里我稍有常识的高工可能就会发现事情并不简单。<br>
+哎，不对啊，这里DATA就是浏览器发送的HTTP GET请求吗?<br>
+这玩意发送给SSLVPN设备,SSLVPN怎么知道发送给哪个服务器，哪个端口啊，整个报文里没有任何关于客户端发送的原始报文网络层、传输层的任何信息啊？？</p>
+<p>确实，DATA并不只是HTTP GET，我用的颜色也表明了DATA其实并不等于HTTP GET。</p>
+<p>DATA的数据肯定是包含且不只是HTTP GET，多一些内容。</p>
+<p>多的内容是什么？<br>
+是不是就是靠多出来的内容告诉SSLVPN设备客户端发送的原始报文网络层、传输层的信息？<br>
+可以是，但是没必要是。</p>
+<figure data-type="image" tabindex="21"><img src="http://www.behemoth.icu/img/20200412231209.png" alt="P21" loading="lazy"></figure>
+<h4 id="sslvpn设备需要知道什么">SSLVPN设备需要知道什么？</h4>
+<p>为了解决上面的问题，我们先跳跃一下，看下 一幅图 里第4部SSLVPN设备会干什么。</p>
+<figure data-type="image" tabindex="22"><img src="http://www.behemoth.icu/img/20200412231218.png" alt="P22" loading="lazy"></figure>
+<p>注意我的措辞，我并没有说SSL层内封装的只有原始报文的HTTP GET。<br>
+但是SSLVPN设备确实是从3里的报文SSL层内拿到的HTTP GET。</p>
+<figure data-type="image" tabindex="23"><img src="http://www.behemoth.icu/img/20200412231227.png" alt="P23" loading="lazy"></figure>
+<p>从小插件发过来的报文里获取HTTP GET之后，SSLVPN设备向inside server 192.168.1.100发起TCP三次握手之后发送HTTP GET。</p>
+<figure data-type="image" tabindex="24"><img src="http://www.behemoth.icu/img/20200412231248.png" alt="P24" loading="lazy"></figure>
+<p>仔细看下这个SSLVPN设备向内网insider server发送的TCP SYN。</p>
+<figure data-type="image" tabindex="25"><img src="http://www.behemoth.icu/img/20200412231258.png" alt="P25" loading="lazy"></figure>
+<p>源IP只是SSLVPN设备前往内网的出接口IP地址，这个报文由SSLVPN设备始发，源端口也是SSLVPN设备上随机的源端口，只有这三个是和SSLVPN TCP接入相关的：</p>
+<ol>
+<li>
+<p>目的IP</p>
+</li>
+<li>
+<p>目的端口</p>
+</li>
+<li>
+<p>传输层协议（其实只有TCP）</p>
+</li>
+</ol>
+<p>这三个信息是什么呢？</p>
+<figure data-type="image" tabindex="26"><img src="http://www.behemoth.icu/img/20200412231307.png" alt="P26" loading="lazy"></figure>
+<p><strong>SSLVPN设备上配置TCP资源时填入的信息。</strong><br>
+<strong>SSLVPN设备上配置TCP资源时填入的信息。</strong><br>
+<strong>SSLVPN设备上配置TCP资源时填入的信息。</strong></p>
+<p>所以，SSLVPN设备并不需要知道客户端始发报文的目的IP、目的端口、传输层协议（其实就只有TCP），这些在SSLVPN设备本身都有，这些其实就是一个个SSLVPN TCP资源。</p>
+<figure data-type="image" tabindex="27"><img src="http://www.behemoth.icu/img/20200412231318.png" alt="P27" loading="lazy"></figure>
+<p>SSLVPN设备在本地给TCP资源编好号之后，它只需要知道客户端访问的是哪个编号的TCP资源即可，然后拿到客户端小插件发送过来的报文SSL层内的用户原始数据报文即可，然后自己构造TCP报文与内网服务器进行通信。<br>
+是不是听起来很像一个TCP代理？<br>
+是的，很像，只是多了：小插件通过SSL报文把原始报文发过来，并且携带访问的目的资源编号。</p>
+<h4 id="ssl封装的data多出来的是什么">SSL封装的DATA多出来的是什么？</h4>
+<p>现在我们已经知道的信息：</p>
+<ol>
+<li>小插件是从SSLVPN设备的网页下载的</li>
+<li>SSLVPN设备只需要知道客户端访问的TCP资源编号即可构造报文进行<code>TCP Proxy</code>，对内网发起访问。</li>
+<li>小插件负责劫持客户端的TCP连接，所以它知道客户端能访问的内网TCP资源信息，自然也包括TCP资源编号。</li>
+</ol>
+<p>所以，你觉得前面我们提到的SSL层内的data部分除了原始应用层报文，多出来的部分可能是什么？</p>
+<figure data-type="image" tabindex="28"><img src="http://www.behemoth.icu/img/20200412231328.png" alt="P28" loading="lazy"></figure>
+<p>自然多出来的就是资源编号。</p>
+<figure data-type="image" tabindex="29"><img src="http://www.behemoth.icu/img/20200412231338.png" alt="P29" loading="lazy"></figure>
+<p>小插件自然也知道SSLVPN TCP资源其编号和目的IP、目的端口：</p>
+<ol>
+<li>有了目的端口、目的IP才能在本地进行TCP劫持完成三次握手</li>
+<li>用户发送访问资源的报文，携带DATA</li>
+<li>继续劫持用户发送的报文，将DATA内容加上资源编号通过SSL加密发送到SSLVPN设备</li>
+<li>SSLVPN设备解密之后根据其中携带的资源编号去找到内网服务器IP、内网服务器端口号，然后构造TCP三次握手，三次握手完成之后发送用户的DATA，完成用户数据通过小插件到内网服务器的整个通信过程。</li>
+</ol>
+<h4 id="最后回顾下-一幅图">最后回顾下 一幅图</h4>
+<p>所以现在再次让我们看下 一幅图：</p>
+<figure data-type="image" tabindex="30"><img src="http://www.behemoth.icu/img/20200412231347.png" alt="P30" loading="lazy"></figure>
+<p>注意：</p>
+<ol>
+<li>这里1、2、3、4顺序和最开始不一样</li>
+<li>只体现了HTTP GET如何传输，本地小插件劫持TCP三次握手、SSLVPN设备与inside server TCP三次握手均未体现。</li>
+<li>从SSLVPN终端到SSLVPN设备中间经过出口路由器，存在源地址NAT未体现。</li>
+</ol>
+<h3 id="总结">总结</h3>
+<p>本篇只是体现了SSLVPN TCP访问方式的大致内容，实际上该方式每个厂家实现细节都存在差距，为方便理解，很多概念也是非标准称呼，如index这个说法，在H记实际是socket ID，具体报文封装也不只是原始DATA+一个所谓的index。<br>
+具体更细节大家有空可以研究，希望本篇内容可以让大家对SSLVPN TCP接入方式的理解不再那么迷糊。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E8%B4%B9%E8%A7%A3%E7%9A%84tcp%E6%8E%A5%E5%85%A5%E6%96%B9%E5%BC%8F">费解的TCP接入方式</a>
+<ul>
+<li><a href="#%E4%B8%8D%E6%AD%A2%E4%B8%80%E6%AC%A1%E8%A2%AB%E4%BA%BA%E9%97%AE%E5%88%B0">不止一次被人问到</a></li>
+<li><a href="#%E4%B8%BA%E5%95%A5%E6%98%AFtcp%E6%8E%A5%E5%85%A5%E6%96%B9%E5%BC%8F">为啥是TCP接入方式</a></li>
+</ul>
+</li>
+<li><a href="#%E5%A5%BD%E5%A5%BD%E7%9C%8B%E7%9C%8Bsslvpn-tcp%E6%8E%A5%E5%85%A5%E6%96%B9%E5%BC%8F">好好看看SSLVPN TCP接入方式</a>
+<ul>
+<li><a href="#%E9%9A%BE%E5%9C%A8%E5%93%AA%E5%84%BF">难在哪儿</a></li>
+<li><a href="#tcp%E6%8E%A5%E5%85%A5%E6%96%B9%E5%BC%8F%E4%BB%8E%E5%A4%B4%E5%88%B0%E4%BD%8D%E7%9A%84%E6%B5%81%E7%A8%8B">TCP接入方式从头到位的流程</a></li>
+<li><a href="#%E6%9C%AC%E5%9C%B0%E4%B8%8D%E5%8F%AA%E6%98%AF%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8">本地不只是一个浏览器</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A880%E7%AB%AF%E5%8F%A3">为什么不直接用80端口</a></li>
+<li><a href="#%E5%8A%AB%E6%8C%81%E5%AE%8C%E6%AF%95%E5%8F%91%E9%80%81%E7%9C%9F%E7%9A%84%E6%95%B0%E6%8D%AE">劫持完毕，发送真的数据</a></li>
+<li><a href="#sslvpn%E8%AE%BE%E5%A4%87%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88">SSLVPN设备需要知道什么？</a></li>
+<li><a href="#ssl%E5%B0%81%E8%A3%85%E7%9A%84data%E5%A4%9A%E5%87%BA%E6%9D%A5%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88">SSL封装的DATA多出来的是什么？</a></li>
+<li><a href="#%E6%9C%80%E5%90%8E%E5%9B%9E%E9%A1%BE%E4%B8%8B-%E4%B8%80%E5%B9%85%E5%9B%BE">最后回顾下 一幅图</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/l3-vni/">
+              <h3 class="post-title">
+                L3 VNI
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
