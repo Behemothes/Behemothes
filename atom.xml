@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://behemothes.github.io/Behemothes/</id>
     <title>Gridea</title>
-    <updated>2020-04-13T15:27:06.094Z</updated>
+    <updated>2020-04-14T07:55:31.151Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://behemothes.github.io/Behemothes/"/>
     <link rel="self" href="https://behemothes.github.io/Behemothes/atom.xml"/>
@@ -10,6 +10,121 @@
     <logo>https://behemothes.github.io/Behemothes/images/avatar.png</logo>
     <icon>https://behemothes.github.io/Behemothes/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[靓仔，这个问题怎么搞啊（来回路径不一致）]]></title>
+        <id>https://behemothes.github.io/Behemothes/post/jing-zi-zhe-ge-wen-ti-zen-me-gao-a-lai-hui-lu-jing-bu-yi-zhi/</id>
+        <link href="https://behemothes.github.io/Behemothes/post/jing-zi-zhe-ge-wen-ti-zen-me-gao-a-lai-hui-lu-jing-bu-yi-zhi/">
+        </link>
+        <updated>2020-04-14T07:32:38.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="靓仔">靓仔</h3>
+<p><em>“我已经老了，老到记不清许多事情，但我仍然记得那一年的夏天，一个广东的客户用广东腔在电话里对着我说：靓仔，这个问题怎么办呢？” 																									------尼古拉斯·chris</em></p>
+<p>讲真，作为一个TAC，处理防火墙遇见来回路径不一致问题有很多次，多到我已经记不住客户都是什么样的拓扑、什么的路由导致来回路径不一致。</p>
+<p>不做TAC有一段时间，我甚至已经忘记当年的客户是如何不耐烦的表示不相信是因为自己的业务报文来回路径不一致导致的业务不通。</p>
+<p>但是过了这么久，我至今还记得一个客户的来回路径不一致问题，倒不是因为他的问题有多难搞，他的组网有多么奇葩，他的态度不好，而只是单纯的因为他那句：“靓仔”。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200413235506.png" alt="P1" loading="lazy"></figure>
+<p>港真，那时候我还没有出差去过广东，那是我人生第一次在除了电视之外听到人对我说这两个字。</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200413235813.png" alt="P2" loading="lazy"></figure>
+<h3 id="来回路径不一致问题">来回路径不一致问题</h3>
+<p>报文来回路径不一致是个很常见的问题，当客户的网络中没有部署防火墙时，很大可能（作为一个TAC必须严谨，没有防火墙，说不定人家有WAF呢、有网闸呢）不会导致任何问题。</p>
+<p>但是如果部署了防火墙，并且来、回的流量中有且只有一个经过了防火墙，这就会导致问题，原因在于现在的防火墙都是一种被称为“会话状态监测”的防火墙。</p>
+<h4 id="何为会话状态检测">何为会话状态检测</h4>
+<p>以TCP报文为例，我们都知道TCP连接建立时的三次握手。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200414102304.png" alt="P3" loading="lazy"></figure>
+<p>当双向报文都经过防火墙时，TCP的第一个报文<code>TCP SYN</code>到达防火墙，对于一个新的数据流而言，其报文五元组匹配不中防火墙上已经存在的会话中任何一个会话，此时防火墙会为这个报文新建一个会话，并且将会话的状态记录为：<strong>TCP SYN已发送，等待TCP SYN，ACK</strong></p>
+<p>此时这个报文被称为<strong>首包</strong>。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200414152152.png" alt="P4" loading="lazy"></figure>
+<p>这个数据流的<code>TCP SYN，ACK</code>回向时经过防火墙，此时防火墙根据flag字段判断该报文并不是一个<strong>首包</strong>，而是后续报文，此时会查找会话表，发现有存在的会话表，并且会话状态为<strong>等待TCP SYN，ACK</strong>，能够对得上，这个报文将会被放通。此时会话状态将会变为<strong>TCP SYN,ACK已发送，等待TCP ACK</strong></p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200414152643.png" alt="P5" loading="lazy"></figure>
+<p>当TCP三次握手的最后一个报文，<code>TCP ACK</code>到达防火墙时，此时根据flag字段判断不是首包，检查会话表，有会话对应，并且状态也对应的上，报文被放通。同时会话状态变为：<strong>TCP连接已建立</strong></p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200414152609.png" alt="P6" loading="lazy"></figure>
+<p>所以对于会话检测而言：</p>
+<ol>
+<li>非首包不仅要存在会话</li>
+<li>报文也得和会话中的状态对应一致。</li>
+</ol>
+<pre><code class="language-shell">Slot 0:
+Initiator:
+  Source      IP/port: 192.168.182.1/53615
+  Destination IP/port: 192.168.182.100/10023
+  DS-Lite tunnel peer: -
+  VPN instance/VLAN ID/Inline ID: -/-/-
+  Protocol: TCP(6)
+  Inbound interface: GigabitEthernet2/0
+  Source security zone: Trust
+Responder:
+  Source      IP/port: 192.168.182.100/10023
+  Destination IP/port: 192.168.182.1/53615
+  DS-Lite tunnel peer: -
+  VPN instance/VLAN ID/Inline ID: -/-/-
+  Protocol: TCP(6)
+  Inbound interface: InLoopBack0
+  Source security zone: Local
+State: TCP_ESTABLISHED
+Application: GENERAL_TCP
+Start time: 2020-04-14 10:51:58  TTL: 3599s
+Initiator-&gt;Responder:            0 packets          0 bytes
+Responder-&gt;Initiator:            0 packets          0 bytes
+
+Total sessions found: 1
+</code></pre>
+<p>以该会话为例，我们可以看到会话状态为<code>TCP_ESTABLISHED</code>，代表该会话已经完成三次握手，目前已经是传输业务的报文。</p>
+<p>所以假设一个TCP会话的状态已经是<strong>TCP连接已建立</strong>，此时收到一个能够匹配该会话，但是TCP Flag字段中<code>SYN bit</code>置为1的报文，这个报文妥妥的要被丢弃，因为会话状态不对，人家都三次握手完成了，你这不是成心来捣乱的嘛？</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200414101350.png" alt="P7" loading="lazy"></figure>
+<p>或者也有可能是DOS攻击来了，不要慌，很多防火墙现在支持防御<code>TCP SYN Flood</code>攻击。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200414101437.png" alt="P8" loading="lazy"></figure>
+<p>但是能不能防得住吗，各位了解防火墙防御<code>TCP SYN Flood</code>攻击原理的话大概都知道答案......</p>
+<h4 id="常见场景">常见场景</h4>
+<p>当然前面说的TCP会话在<strong>TCP连接建立</strong>的状态下收到<code>TCP Flags</code>为<code>SYN</code>的不太常见，不可能TCP三次握手的报文来回路径一致，后边真正传输业务的时候报文来回路径又不一致了。<br>
+更为常见的场景是，TCP三次握手时因为来回路径不一致导致三次握手无法正常完成，业务直接异常。<br>
+比如下面的两种情况：</p>
+<ol>
+<li>
+<p><code>TCP SYN</code>报文经过防火墙，<code>TCP SYN，ACK</code>没经过，<code>ACK</code>又经过了，此时<code>ACK</code>报文因为和会话状态不一致，被丢弃。</p>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200414152712.png" alt="P9" loading="lazy"></figure>
+</li>
+<li>
+<p><code>TCP SYN</code>报文没经过防火墙，<code>TCP SYN，ACK</code>经过防火墙，此时因为非首包，无法创建会话，又没有已经存在的会话可以匹配，被丢弃。</p>
+<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200414152938.png" alt="P10" loading="lazy"></figure>
+</li>
+</ol>
+<p>除了TCP之外，很多协议存在会话状态的概念，同时很多协议并不存在，比如：</p>
+<ul>
+<li>GRE，没有会话状态，因为其只有协议号，没有端口号，也没有通信时方向概念，A和B通信，B和A通信的报文看起来都一样，无法判断哪个报文是首包。</li>
+<li>ICMP，存在会话状态，虽然也是没有端口号，但是人家通信时有方向概念，<code>ICMP Request</code>和<code>ICMP Reply</code>报文还是不一样的。</li>
+</ul>
+<p>UDP呢？大家可以自己思考下。</p>
+<h3 id="那位广东靓仔的问题">那位广东靓仔的问题</h3>
+<p>那位叫我靓仔的客户，虽然我没有见过他，但是听他说话的语气，应该是一个和我差不多的年轻人，所以按照他们的说法，他应该也是“靓仔”，所以他的问题就叫做“那位广东靓仔的问题”好了。</p>
+<h4 id="问题描述">问题描述</h4>
+<p>他的问题呢实际也很简单，一个非常简单的拓扑。</p>
+<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200414153032.png" alt="P11" loading="lazy"></figure>
+<p>R1需要访问R2下的一个网段（使用10.1.1.1地址去访问），R1、R2中间部署了一个防火墙，并且防火墙与R1、R2互联的接口都是二层接口。</p>
+<p>R2不属于广东靓仔管理，FW1、R1他可以配置，但这个项目强制性要求R1访问R2下的网段时路由先到FW1上的10.1.1.2，再由防火墙转发给R2上的10.1.1.3。</p>
+<p>这就问题来了，因为去的时候报文经过防火墙转发属于三层转发，回来时却不是了，R2路由转发给R1时直接二层转发了。</p>
+<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200414153053.png" alt="P12" loading="lazy"></figure>
+<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200414153108.png" alt="P13" loading="lazy"></figure>
+<p>报文来回时都经过防火墙了，但是报文一个是二层转发的，一个是三层转发的。</p>
+<p>防火墙也判断为来回路径不一致了。</p>
+<p>我自己测试了一下，发现确实如此，我的认知中来回路径不一致的情况又增加了。</p>
+<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200414143316.png" alt="P14" loading="lazy"></figure>
+<h4 id="解决方案">解决方案</h4>
+<p>解决方式呢，其实也很简单，R1上路由直接下一跳指为10.1.1.3就可以，但是广东靓仔表示不能这么做，项目的硬性要求。</p>
+<p>那只能使用另外一个方案了。</p>
+<p>对于来回路径不一致并且客户的组网、配置无法修改时，很多防火墙都提供了一种非严格的会话转发模式（不同厂家叫法不同，我听过的说法就有：单向流检测、稀疏的会话模式.....），这种模式特征如下：</p>
+<ul>
+<li>对于报文不严格的检查会话状态，如对于<strong>TCP SYN已发送，等待TCP SYN，ACK</strong>状态的会话，如果此时防火墙收到能够匹配该会话的<code>TCP ACK</code>，状态无法匹配，不进行严格的会话检查，同样进行放通。</li>
+<li>对于非首包同样可以创建新的会话，如来回路径不一致时，首包未经过防火墙，防火墙收到的第一个报文是<code>TCP SYN，ACK</code>，此时防火墙可以为该报文创建会话，并放通转发。</li>
+</ul>
+<p>以上两种特征已经能够解决绝大多数场景下的来回路径不一致导致的问题。</p>
+<h5 id="很不幸的广东靓仔">很不幸的广东靓仔</h5>
+<p>但是很不幸运，那位广东靓仔遇见的FW是个当时新型号、新版本的设备，我在产品手册里翻了半天发现，居然没有这个功能。</p>
+<p>是的，老型号、老版本都支持的功能，新版本居然没有，研发表示新版本还没来得及做。</p>
+<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200414142516.png" alt="P15" loading="lazy"></figure>
+<p>对此广东靓仔表示：“那就没办法咯”，我肯定得表示目前来说是的，不改组网没有办法。</p>
+<p>至于后来他到底如何处理就不得而知，因为后来他再也没有联系过我。</p>
+<p>而在几个月之后，我再次看到这款防火墙的产品手册时发现，那个功能，它有了。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[ACG WEB认证成功跳转页面原理]]></title>
         <id>https://behemothes.github.io/Behemothes/post/acg-web-ren-zheng-cheng-gong-tiao-zhuan-ye-mian-yuan-li/</id>
@@ -1938,185 +2053,6 @@ relay agent.)，比较常见的场景：</p>
 <figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412232315.png" alt="P21" loading="lazy"></figure>
 </li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[关于框式设备的一些小知识]]></title>
-        <id>https://behemothes.github.io/Behemothes/post/guan-yu-kuang-shi-she-bei-de-yi-xie-xiao-zhi-shi/</id>
-        <link href="https://behemothes.github.io/Behemothes/post/guan-yu-kuang-shi-she-bei-de-yi-xie-xiao-zhi-shi/">
-        </link>
-        <updated>2020-04-13T14:46:15.000Z</updated>
-        <content type="html"><![CDATA[<h3 id="一些基本知识">一些基本知识</h3>
-<h4 id="框式设备组成">框式设备组成</h4>
-<p>以框式交换机为例，框式由以下几个组件组成：</p>
-<ol>
-<li>机框</li>
-<li>主控板</li>
-<li>接口板</li>
-<li>交换网板</li>
-</ol>
-<p>在谈到很多协议时我们会说到转控分离，即网络设备的转发平面、控制平面分离开来，现在新潮的SDN就是典型的转控分离。</p>
-<p>谈SDN几乎必谈转控分离。</p>
-<p>对于盒式设备我们很难直观地看到所谓的设备转发平面、控制平面，整个设备就是一个盒子，转、控两平面都集成在盒子内部。</p>
-<p>但对于框式设备，我们可以“清楚”地看到设备的转发平面、控制平面：</p>
-<ol>
-<li>转发平面：由接口板、交换网板组成</li>
-<li>控制平面：主控板</li>
-</ol>
-<p>不过这种简单的划分方法其实并不严谨，如对于接口板而言，其上也存在着处理一些协议报文的芯片，一些我们传统上定义的控制平面做的事，部分也在接口板在上完成了。</p>
-<h4 id="各组件之间的连接">各组件之间的连接</h4>
-<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200412232510.png" alt="[P1]" loading="lazy"></figure>
-<p>框式交换机各组件之间的连接逻辑图如上。</p>
-<p>接口板、主控板、交换网板都插在机框上，机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接，机框内部存在将各个槽位上接口相互连接的内部连接线。</p>
-<p>接口板、主控板、交换网板之间的通信通过机框提供的接口、内部连接线完成。</p>
-<p>这里就有框式设备的一个坑。</p>
-<h4 id="报文在框式设备内部转发">报文在框式设备内部转发</h4>
-<p>对于框式设备转发报文，业务报文走向如下：</p>
-<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200412232525.png" alt="P2" loading="lazy"></figure>
-<p>接口板进入-&gt;交换网板-&gt;接口板出</p>
-<p>交换网板负责在接口板之间进行报文的转发。</p>
-<h5 id="转控分离">转控分离</h5>
-<p>在这个过程中可以看到并没有主控板什么事，了解现在网络设备转发的可能都知道，高端一些的网络设备都是所谓的“硬转发”，即转发表项下发在接口板的快速转发芯片中，报文进入接口板直接转发了，根本没有在控制平面查询任何表项。</p>
-<p>注意上面我说的转发表项不是传统意义上的三层路由表（RIB：routing information base）、二层的MAC地址表。</p>
-<p>以三层转发为例，设备在完成路由学习、路由计算之后生成RIB，根据RIB设备会生成一个FIB（forwarding information base），基本长这样：</p>
-<pre><code class="language-shell">Destination/Mask   Nexthop         Flag  TimeStamp     Interface      TunnelID
-10.0.35.3/32       10.0.24.2       DGHU  t[71]         GE0/0/0        0x0
-10.0.24.0/24       10.0.24.4       U     t[24]         GE0/0/0        0x0
-10.0.2.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.23.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.12.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.35.0/24       10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.3.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.1.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-10.0.5.0/24        10.0.24.2       DGU   t[71]         GE0/0/0        0x0
-</code></pre>
-<p>FIB相比较于路由表区别：</p>
-<p>FIB表中nexthop必定是直连的下一跳，路由表中的nexthop可能还不是直连的，比如手动配置的静态路由、从BGP邻居学习过来的路由nexthop地址不在IGP路由表中，这些都需要进行路由迭代计算出直连的下一跳。</p>
-<p>用图大概表述下FIB转发过程：</p>
-<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200412232606.png" alt="P3" loading="lazy"></figure>
-<p>FIB表在接口板直接完成了对报文的转发，而FIB生成来自于主控板上的RIB，主控板生成FIB之后下发到接口板，之后转发时就没主控板什么事，同时主控板是否繁忙对转发也不会存在影响，这就是典型的转控分离。</p>
-<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200412232631.png" alt="P4" loading="lazy"></figure>
-<h5 id="硬转发">硬转发</h5>
-<p>细心想一下，FIB表只是完成了表项存储在接口板上，如果接口板还需要查找这个FIB表，那似乎每次转发还需要查询表项，这距离所谓的快速“硬件转发”貌似还有一些差距。</p>
-<p>是的。</p>
-<p>实际“硬件转发”时FIB表项并不是存储在接口板的CPU中，转发报文并不需要查询接口板的CPU。</p>
-<p>FIB表项的相关信息直接存储在接口的转发芯片中，转发芯片直接依据内存中FIB表项相关信息进行转发。</p>
-<p>有兴趣的可以看下下面一段内容：</p>
-<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200412232646.png" alt="P5" loading="lazy"></figure>
-<p><em>在这里我们能够看到目的地址和目的地址的子网掩码分别是0xa000200和0xffffff00，对应的十进制就是10.0.0.2和255.255.255.0。但是通过该图，我只能看到目的地址和子网掩码，如何去该目的我还是一无所知。</em></p>
-<p><em>这时就需要查看该前缀对应VN中的内容，上图中给出了VN的索引号即Index号，所以就要查看该索引号的VN的详细内容。使用下面的命令来查看：</em></p>
-<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200412232655.png" alt="P6" loading="lazy"></figure>
-<p><em>通过上图可以看到VN的具体信息，他指明了ADJEntry的内存位置，下一条的地址，权重，标签等信息。<strong>值得注意的是这里只有去往目的地的下一条地址，却没有出接口。</strong></em></p>
-<p><em>于是，我再找一下ADJ的信息，如下图显示</em></p>
-<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200412232709.png" alt="p7" loading="lazy"></figure>
-<p><em>这里终于看到了一些信息，这里看到了该接口的ADJ4信息中包含VN的序列号，描述了该接口转发状态，该接口是去往10.0.0.2的出接口。</em></p>
-<h5 id="快速转发">快速转发</h5>
-<p>后续添加</p>
-<h3 id="一些你可能不知道的知识">一些你可能不知道的知识</h3>
-<h4 id="没有交换网板的框式设备">没有交换网板的框式设备</h4>
-<p>并不是所有的框式设备都有交换网板，一些框式设备主控板集成了交换网板的功能。</p>
-<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200412232724.png" alt="P8" loading="lazy"></figure>
-<p>从上图可以看出来，一些框式设备主控和交换网板集成在了一起，那这样所有业务报文的转发都必然需要经过主控板。</p>
-<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200412232738.png" alt="P9" loading="lazy"></figure>
-<h4 id="hw的css2-1n主控备份">HW的CSS2 1+N主控备份</h4>
-<p>一个和主控板集成交换网板相关的内容。</p>
-<p>HW对于框式交换机二虚一的技术叫做CSS（Cluster Switch System），CSS还分为传统CSS以及CSS2。</p>
-<p>CSS2支持一个所谓的“1+N主控备份“：两个框里只要一个有一个主控板正常工作，两个框的接口板就都可以正常转发。</p>
-<p>而传统CSS做不到，为啥呢？</p>
-<p>因为传统CSS是在主控板集成交换网板的交换机上使用的技术。</p>
-<p>了解交换机多虚一技术的话都应该了解，目前见到的多虚一技术在交换机之间都存在着所谓的“虚拟化专用线缆”，这里是在聊CSS，我们就用CSS里的叫法：集群线缆。对于主控板集成交换网板的框式设备来说，集群线缆连接的位置只能是主控板或者是接口板。</p>
-<figure data-type="image" tabindex="10"><img src="http://www.behemoth.icu/img/20200412232754.png" alt="P10" loading="lazy"></figure>
-<p>集群线缆通过主控板连接：当一个框内主控板全部故障，接口板之间的流量无法通过本框内的主控板转发，同时因为集群线缆在主控板，此时已经丢失了跨框转发流量的能力，无法进行跨框转发。</p>
-<figure data-type="image" tabindex="11"><img src="http://www.behemoth.icu/img/20200412232808.png" alt="P11" loading="lazy"></figure>
-<p>集群线缆通过接口板连接：当一个框内主控板全部故障，别的接口板与该接口板之间的通信中断，理论上除了连接集群线缆的这个接口板自身还能通过集群线缆跨框转发流量，其余的全部都GG。</p>
-<figure data-type="image" tabindex="12"><img src="http://www.behemoth.icu/img/20200412232826.png" alt="P12" loading="lazy"></figure>
-<p>而对于主控板、交换网板独立的框式交换机而言，集群线缆可以连接在交换网板上，一个框内的主控板全部故障，无论是本框内接口板之间的流量还是跨框的流量，都可以正常转发。同时控制层面还有另外一个框内的主控板可用，所以可以实现两个框内只要有一个主控板正常工作，整个CSS2内的两个框转发平面、控制平面都可以正常工作，即所谓的“1+N主控备份”。</p>
-<p>所以通过以上内容，主控板集成交换网板的劣势大家应该能看出来：</p>
-<ol>
-<li>主控板故障直接影响设备转发，挂掉一个主控板，接口板之间的转发通道就少了一个，转发性能影响很大。</li>
-<li>即便做堆叠、集群、IRF之类的交换机虚拟化技术，一个框内的正常主控板还是至少要有一个，不然框之间没有任何连接，控制平面还是挂掉。</li>
-</ol>
-<p><strong>其实以上问题的本质是：主控板、交换网板本来分别属于控制平面、转发平面，两种板卡的功能被集成到一个板卡上，一个板卡同时承担转发、控制平面的工作，其故障必然导致两个平面都受到影响，本来框式设备将转、控分离了，为了节省成本这种设计又把产品倒退了。。</strong></p>
-<h4 id="板卡之间的连线问题">板卡之间的连线问题</h4>
-<p>在基本知识里我提到了：“接口板、主控板、交换网板都插在机框上，机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接，机框内部存在将各个槽位连接的内部连接线。”</p>
-<p>机框内连线承载了板卡之间的通信，下图讲解了逻辑上的连接。</p>
-<figure data-type="image" tabindex="13"><img src="http://www.behemoth.icu/img/20200412232510.png" alt="P1" loading="lazy"></figure>
-<p>在上图里我用蓝色线缆表示接口板与主控板之间的连线，是不是看了这个图大家觉得接口板1、2、3与主控板之间的连线都是完全相同的，或者说带宽相同吧？</p>
-<p>答案是很有可能不相同。</p>
-<p>回忆下我之前说的内容:&quot;机框内存在内部接口，这些内部接口和接口板、主控板、交换网板相互连接。”</p>
-<p>所以把逻辑连接图补充得严谨一些应该是下图的样子。</p>
-<figure data-type="image" tabindex="14"><img src="http://www.behemoth.icu/img/20200412232906.png" alt="P13" loading="lazy"></figure>
-<p>接口板、主控板（集成了交换网板的功能）插在不同的slot（槽位）上，一般框式交换机的主控板slot固定，其它的slot为接口板、交换网板使用。</p>
-<p>内部接口固定在Slot上，固定型号的框式设备，内部接口之间的连线固定，即slot之间的连线固定，理想状态是各个slot之间的连线都是完全相同的：带宽相同。</p>
-<p>但是实际情况是，slot之间的连线可能并不相同，比如下面这样：</p>
-<figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200412232923.png" alt="P14" loading="lazy"></figure>
-<p>slot3与slot1、slot2之间的连线拥有比slot4-6与slot1、slot2之间的连线更大带宽，所以可能会出现同样一个接口板插在slot3和slot4上性能不同的情况，如果你遇见过接口板插在不同槽位性能存在差距，嘿嘿，说不定你很幸运地遇见了这样的框式设备。</p>
-<p>再想一个问题：接口板所在slot与交换网板所在slot之间的连线一定超过了接口板上所有接口的速率之和吗？</p>
-<p>想想为什么会存在内部连线带宽不同的情况，你觉得问题答案会是什么呢？</p>
-<figure data-type="image" tabindex="16"><img src="http://www.behemoth.icu/img/20200412232931.png" alt="P15" loading="lazy"></figure>
-<p>10G如果够的话为什么会有20G呢，对外宣传这些slot可都是能够满速率的哦。</p>
-<h4 id="当框式设备遇见fw板卡">当框式设备遇见FW板卡</h4>
-<p>现在很多框式设备都可以插业务板卡，这里的业务板卡不是说接口板，而是：AC（无线控制器）板卡、LB（loadbalance）板卡、FW（firewall）板卡之类的。</p>
-<p>AC板卡还好，但是LB板卡、FW板卡需要对框式设备上的业务流量进行负载均衡、安全检查，这就涉及流量牵引问题，如果LB、FW板卡上存在三层接口，来回流量都会经过LB、FW板卡上三层接口转发，那很好，没啥大问题，和普通三层转发没任何区别。</p>
-<p>如果框式设备为二层转发流量，那就需要涉及流量牵引，将框式设备来回转发的流量牵引到对应的板卡。</p>
-<p><strong>下面以我之前工作过的某厂FW板卡为例讲一些FW板卡的特性，当然并不是所有厂家如下面描述的一样。</strong></p>
-<h5 id="框式设备插fw板卡">框式设备插FW板卡</h5>
-<p>FW板卡和正常FW一样，转发流量时会检查会话表，如果只是单向流量经过会导致流量无法匹配会话的状态机，从而被丢弃，最典型的例子TCP三次握手：</p>
-<figure data-type="image" tabindex="17"><img src="http://www.behemoth.icu/img/20200412232944.png" alt="P16" loading="lazy"></figure>
-<p>报文首包[TCP SYN]经过FW1转发，FW为该条流量创建会话表项，同时记录该条会话状态为[SYN Sent]，之后回包[TCP SYN,ACK]并未经过FW1。</p>
-<figure data-type="image" tabindex="18"><img src="http://www.behemoth.icu/img/20200412233000.png" alt="P17" loading="lazy"></figure>
-<p>当TCP三次握手最后一个报文到达FW1时，FW1检查会话表，发现状态机无法匹配：</p>
-<p>此时对应会话的状态为[SYN Sent]，下一个报文应该为[TCP SYN,ACK],但是FW1收到的为[TCP ACK]，状态机匹配失败，报文因此被丢弃。</p>
-<p>为此对于FW/FW板卡而言，为保证报文的正常转发需要让来回流量全部经过，不能出现单向路径。</p>
-<figure data-type="image" tabindex="19"><img src="http://www.behemoth.icu/img/20200412233010.png" alt="P18" loading="lazy"></figure>
-<p>如果框式设备上只有一个FW板卡，引流还不算复杂，使用MQC匹配来回流量，将来回流量都引到FW板卡上。</p>
-<figure data-type="image" tabindex="20"><img src="http://www.behemoth.icu/img/20200412233028.png" alt="P19" loading="lazy"></figure>
-<p>FW板卡这种业务板卡有明确的内部连接接口号，插在槽位上之后在设备命令行下可以看到内部接口编号，使用MQC将来回流量的出接口设置为该内部接口即可，流量就会通过该接口送达该槽位上的FW板卡。</p>
-<figure data-type="image" tabindex="21"><img src="http://www.behemoth.icu/img/20200412233042.png" alt="P20" loading="lazy"></figure>
-<p>如果框式设备上存在多个FW板卡，将流量进行分流，分别牵引到不同的FW板卡即可。</p>
-<h5 id="转发速率问题">转发速率问题</h5>
-<p>当框式交换机插上FW插卡，同时所有业务流量需要经过FW插卡转发时，对于单个业务流而言，经过该框转发的最大速率也会发生变化，这里不仅是因为经过FW插卡多处理一次增加了延迟，另外一个原因是FW插卡转发涉及对报文的四层甚至七层的处理，与二三层硬件快速转发相比较速率差距非常大。</p>
-<figure data-type="image" tabindex="22"><img src="http://www.behemoth.icu/img/20200412233054.png" alt="P21" loading="lazy"></figure>
-<p>同时由于FW插卡上会话表的存在，来回报文必须在一个FW插卡上处理，单个业务流的速率上限基本就是一个FW插卡的转发速率上限，即便存在多个FW插卡，也无法同时使用多个FW插卡转发一条业务流。</p>
-<p>同时即便是一个FW插卡上转发速率也可能存在很大的区别，对于FW插卡而言转发需要CPU参与，这点和AC集中转发模式时处理CAPWAP报文类似。</p>
-<p>现在的网络设备也和我们的电脑主机一样CPU都是多核心、多线程的，体现在设备转发时就是存在多个vCPU，每个vCPU都参与转发报文的。</p>
-<p>那当一条业务流的报文进入到FW插卡上，多个vCPU会如何协同转发该条业务流呢？</p>
-<p>其实和大家非常熟悉的链路聚合一样，也存在基于流分担、基于包分担两种模式：</p>
-<figure data-type="image" tabindex="23"><img src="http://www.behemoth.icu/img/20200412233105.png" alt="P22" loading="lazy"></figure>
-<ol>
-<li>
-<p>基于流：一条流被分担到一个固定的vCPU上，所以该条流经过FW插卡转发时速率不会超过一个vCPU的性能上限。</p>
-<figure data-type="image" tabindex="24"><img src="http://www.behemoth.icu/img/20200412233117.png" alt="P23" loading="lazy"></figure>
-</li>
-<li>
-<p>基于包：每个数据包会被分担到不同的vCPU上，所以一条流的数据包会被分担到所有的vCPU上进行转发处理，单条业务流经过FW插卡转发的速率是所有vCPU的性能之和。</p>
-</li>
-</ol>
-<p>乍一看使用基于包的模式转发速率会更高啊，一条流能跑满FW的速率，但基于包的转发模式存在一个致命的缺点：每个包在不同的vCPU处理，因此无法保证每个vCPU的处理延时相同，所以报文经过FW插卡之后可能直接乱序了，如下图所示。</p>
-<figure data-type="image" tabindex="25"><img src="http://www.behemoth.icu/img/20200412233128.png" alt="P24" loading="lazy"></figure>
-<p>报文乱序对于一些业务是完全无法忍受的，如视频会议、语音.......</p>
-<p>其实不管是FW插卡还是链路聚合，使用基于包的负载模式都会存在相同的问题，所以实际场景中如果业务对速率要求比较高，但是对是否乱序无所谓可以使用基于包的模式（比如测速给用户看），其它情况下推荐使用基于流，而实际上很多时候网络厂家的默认设置都是基于流。</p>
-<p>速率问题不仅是FW插卡如此，构架类似的盒式防火墙也会是相同的情况，所以如果遇见打流测试单条流速率和设备宣传的转发性能相差太多，先别急着喷设备虚标参数（国内防火墙的转发性能参数大家都懂），先问问厂家TAC是不是这设备的转发模式分为基于流和基于包，是不是能调整。</p>
-<p>调整为基于包模式之后再去打流测试，结果会快很多，具体快多少看这个设备有多少个逻辑上的vCPU咯，原本用一个vCPU，之后用n个，那结果就是翻n倍咯。</p>
-<figure data-type="image" tabindex="26"><img src="http://www.behemoth.icu/img/20200412233135.png" alt="P25" loading="lazy"></figure>
-<h5 id="本地优先还是不呢">本地优先还是不呢？</h5>
-<p>框式交换机二虚一之后与上下行设备进行跨框链路聚合是很常见的组网，基本为了减少跨框流量的产生，厂家都会默认开启“本地优先”，即链路聚合的出方向流量分担默认都是在本框上的聚合成员接口进行。</p>
-<p>那当框式交换机上插了FW插卡，并且来回流量都被MQC牵引到FW插卡上，如果还是本地优先会不会出现什么问题呢？</p>
-<p>看下面的例子：</p>
-<figure data-type="image" tabindex="27"><img src="http://www.behemoth.icu/img/20200412233154.png" alt="P26" loading="lazy"></figure>
-<p>SW3、SW4与二虚一之后的逻辑交换机建立跨设备的链路聚合，SW3使用聚合接口转发负载分担将一条流发送往SW1，SW1在经过本框的FW插卡处理之后依据本地优先转发的原则，将报文从本框发往SW4。</p>
-<p>SW4上发送该条流的回向报文，负载分担结果为通过与SW2相连的接口发送，报文到达SW2，SW2跨框还是不跨框呢？</p>
-<p>不跨框的话本框上的FW插卡是没有会话表能够匹配该报文的，所以此时如果还是本地优先，结果只能是转发失败，这时就需要关闭本地优先，让流量跨框到SW1，上到SW1的FW插卡处理，再从SW1发往SW3。</p>
-<p>这种场景下流量依旧需要保证来回都在一个FW插卡，不然匹配不上会话。SW3、SW4通过聚合接口转发时如何负载分担流量对于框式交换机SW1、2来说完全是未知的，极有可能出现来回流量收发不在一个框上，此时只能让流量跨框回到创建会话的框上。</p>
-<h5 id="板卡间会话备份">板卡间会话备份</h5>
-<p>对于上一个问题可能有的人会想到在FW板卡上进行会话实时备份。</p>
-<figure data-type="image" tabindex="28"><img src="http://www.behemoth.icu/img/20200412233207.png" alt="P27" loading="lazy"></figure>
-<p>确实能够解决问题，像HW的HRP一样在板卡间进行备份，在FW板卡之间拉一根线备份会话，但是此时会带来一个新的问题：每个板卡上的会话数目都会变多。</p>
-<figure data-type="image" tabindex="29"><img src="http://www.behemoth.icu/img/20200412233239.png" alt="P28" loading="lazy"></figure>
-<p>原本一个板卡会话上限10K，从别的板卡备份过来的会话占了4k，该板卡还能新创建的会话只剩6k了，所以实际上该功能很少使用，太耗费性能。想想客户买了2个FW板卡，一个框插一个，然后你开启板卡间会话备份，怎么向客户解释现在两个板卡加在一起会话上限只有一个板卡的规格？</p>
-<figure data-type="image" tabindex="30"><img src="http://www.behemoth.icu/img/20200412233248.png" alt="P29" loading="lazy"></figure>
-<p>那什么时候可以用板卡间会话备份呢？</p>
-<p>板卡为主备备份的时候，这时候无所谓。</p>
 ]]></content>
     </entry>
 </feed>
