@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>靓仔，这个问题怎么搞啊（来回路径不一致） | Gridea</title>
-<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586850897603">
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586851128188">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="靓仔，这个问题怎么搞啊（来回路径不一致） | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
@@ -23,7 +23,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://behemothes.github.io/Behemothes/">
-  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586850897603" alt="">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586851128188" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -191,14 +191,14 @@ Total sessions found: 1
 <li>对于报文不严格的检查会话状态，如对于<strong>TCP SYN已发送，等待TCP SYN，ACK</strong>状态的会话，如果此时防火墙收到能够匹配该会话的<code>TCP ACK</code>，状态无法匹配，不进行严格的会话检查，同样进行放通。</li>
 <li>对于非首包同样可以创建新的会话，如来回路径不一致时，首包未经过防火墙，防火墙收到的第一个报文是<code>TCP SYN，ACK</code>，此时防火墙可以为该报文创建会话，并放通转发。</li>
 </ul>
-<p>以上两种特征已经能够解决绝大多数场景下的来回路径不一致导致的问题。</p>
+<p>以上两种特征已经能够解决绝大多数场景下来回路径不一致导致的问题。</p>
 <h5 id="很不幸的广东靓仔">很不幸的广东靓仔</h5>
 <p>但是很不幸运，那位广东靓仔遇见的FW是个当时新型号、新版本的设备，我在产品手册里翻了半天发现，居然没有这个功能。</p>
 <p>是的，老型号、老版本都支持的功能，新版本居然没有，研发表示新版本还没来得及做。</p>
 <figure data-type="image" tabindex="15"><img src="http://www.behemoth.icu/img/20200414142516.png" alt="P15" loading="lazy"></figure>
 <p>对此广东靓仔表示：“那就没办法咯”，我肯定得表示目前来说是的，不改组网没有办法。</p>
 <p>至于后来他到底如何处理就不得而知，因为后来他再也没有联系过我。</p>
-<p>而在几个月之后，我再次看到这款防火墙的产品手册时发现，那个功能，它有了。</p>
+<p>而在几个月之后，我再次翻看这款防火墙的产品手册时发现，那个功能，它有了。</p>
 
               </div>
               <div class="toc-container">
