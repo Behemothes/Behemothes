@@ -1,0 +1,307 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DHCP自动获取配置文件 | Gridea</title>
+<link rel="shortcut icon" href="https://behemothes.github.io/Behemothes//favicon.ico?v=1586876885870">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://behemothes.github.io/Behemothes//styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="DHCP自动获取配置文件 | Gridea - Atom Feed" href="https://behemothes.github.io/Behemothes//atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="如何快速配置设备
+记得大学时在培训机构上课，老师当时就问了一个问题，并且说这是一个面试题，让我们回答：
+“有200多台设备需要上线，怎么上线后快速配置这些设备呢？”
+当时我们的回答不外乎：提前写好配置文件，配置好地址能够远程管理之后直接刷配..." />
+    <meta name="keywords" content="技术杂谈" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://behemothes.github.io/Behemothes/">
+  <img class="avatar" src="https://behemothes.github.io/Behemothes//images/avatar.png?v=1586876885870" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="https://behemothes.github.io/Behemothes/" class="menu" target="_blank">
+          首页
+        </a>
+      
+    
+      
+        <a href="https://behemothes.github.io/Behemothes/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="https://behemothes.github.io/Behemothes/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              DHCP自动获取配置文件
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-04-14
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://behemothes.github.io/Behemothes/tag/ERd1sKPdu/" class="post-tag">
+                  # 技术杂谈
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="如何快速配置设备">如何快速配置设备</h3>
+<p>记得大学时在培训机构上课，老师当时就问了一个问题，并且说这是一个面试题，让我们回答：<br>
+<em>“有200多台设备需要上线，怎么上线后快速配置这些设备呢？”</em></p>
+<p>当时我们的回答不外乎：提前写好配置文件，配置好地址能够远程管理之后直接刷配置。</p>
+<p>但是最终的答案却是：使用DHCP实现。</p>
+<h3 id="自动获取配置文件的方式">自动获取配置文件的方式</h3>
+<p>在具体了解下DHCP如何实现之前，我们先了解下为什么需要设备自动获取配置文件以及常见的实现方式有哪些。</p>
+<h4 id="需求">需求</h4>
+<p>当有很多设备（比如几十个、几百个）需要上线，并且这些设备分布在各个角落时，此时挨个进行配置就显得非常麻烦。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.behemoth.icu/img/20200414215336.png" alt="P1" loading="lazy"></figure>
+<p>为解决这种重复劳动，最好的方式是设计一种协议，当设备上电并通过网络获取IP地址之后自动从某处获取配置文件，之后直接运行该配置文件。</p>
+<p>是不是感觉很熟悉。</p>
+<p>其实就是生活中很常见的：AP上线，通过AC统一管理，使用CAPWAP协议进行上线并且进行统一管理。</p>
+<figure data-type="image" tabindex="2"><img src="http://www.behemoth.icu/img/20200414225446.png" alt="P2" loading="lazy"></figure>
+<h4 id="其它方式">其它方式</h4>
+<p>除了CAPWAP之外，能够实现设备自动获取配置的方式还有以下其它几种：</p>
+<ol>
+<li>
+<p>U盘开局：不涉及协议，配置文件在U盘中保存，配置文件需要以指定的名称保存。</p>
+</li>
+<li>
+<p>注册中心开局：设备在版本中内置一个域名，上电之后自动向该域名进行注册，注册之后从注册中心获取配置文件，前提条件为在注册中心已经提前添加了该设备（比如设备的SN），并且配置好了配置文件。</p>
+<figure data-type="image" tabindex="3"><img src="http://www.behemoth.icu/img/20200414225503.png" alt="P3" loading="lazy"></figure>
+</li>
+<li>
+<p>DHCP方式：通过DHCP方式获取配置文件</p>
+</li>
+</ol>
+<p>以上三种方式中1、2没啥好聊的，不涉及协议，设备自身实现机制，DHCP的方式还可以研究研究，之前也见过一些客户使用该方式。</p>
+<h3 id="dhcp-option-66-67">DHCP Option 66 67</h3>
+<p>DHCP方式获取配置文件的核心为两个option选项，<code>DHCP OPTION 66、 67</code> 。</p>
+<p>但实际上涉及的字段不止这两个字段。</p>
+<h4 id="相关字段">相关字段</h4>
+<p><code>Option 66</code>为<code>tftp server name</code>,<code>67</code>为<code>boot file name</code>。</p>
+<p>同时的在<code>DHCP header</code>中还存在两个字段:<code>sname</code>、<code>file</code> 字段,这两个字段和<code>option 66 、67</code>的作用一样。</p>
+<p>让我们先看下<code>RFC 2132</code>中关于这两个option的描述：</p>
+<ol>
+<li>TFTP server name<br>
+<em>This option is used to identify a TFTP server when the 'sname' field in the DHCP header has been used for DHCP options. The code for this option is 66, and its minimum length is 1.</em></li>
+</ol>
+<p>​      Code  Len   TFTP server<br>
+​      +-----+-----+-----+-----+-----+---<br>
+​      | 66  |  n  |  c1 |  c2 |  c3 | ...<br>
+​      +-----+-----+-----+-----+-----+---</p>
+<ol start="2">
+<li>Bootfile name<br>
+<em>This option is used to identify a bootfile when the 'file' field in  the DHCP header has been used for DHCP options. The code for this option is 67, and its minimum length is 1.</em></li>
+</ol>
+<p>​      Code  Len   Bootfile name<br>
+​      +-----+-----+-----+-----+-----+---<br>
+​      | 67  |  n  |  c1 |  c2 |  c3 | ...<br>
+​      +-----+-----+-----+-----+-----+---</p>
+<p>这两个字段用于请求设备的配置文件，其中<code>option 66</code>用于请求配置文件所在的服务器地址（TFTP服务器地址），而<code>option 67</code>用于请求配置文件的名称。</p>
+<p>当客户端通过DHCP获取到配置文件所在的TFTP服务器地址、配置文件名，设备直接通过TFTP协议去<code>download</code>即可。</p>
+<figure data-type="image" tabindex="4"><img src="http://www.behemoth.icu/img/20200414225519.png" alt="P4" loading="lazy"></figure>
+<h4 id="获取过程">获取过程</h4>
+<p>这两个option会在<code>DHCP discovery</code>的<code>option 55</code>中携带，告知DHCP服务器，客户端需要获取这两个参数，服务器需要下发这两个参数。</p>
+<figure data-type="image" tabindex="5"><img src="http://www.behemoth.icu/img/20200414225546.png" alt="P5" loading="lazy"></figure>
+<p>以上就是DHCP方式下通过<code>option 66、67</code>获取配置文件的过程。</p>
+<p>但是实际上真的如此吗？</p>
+<p>要不我们看个抓包？</p>
+<p>DHCP Discovery：</p>
+<figure data-type="image" tabindex="6"><img src="http://www.behemoth.icu/img/20200414225558.png" alt="P6" loading="lazy"></figure>
+<p>和预想的一样。</p>
+<figure data-type="image" tabindex="7"><img src="http://www.behemoth.icu/img/20200414225607.png" alt="P7" loading="lazy"></figure>
+<p>不太一样了，没看到<code>option 66、67</code>，只在<code>DHCP header</code>中看到了<code>bootfile name</code>，也就是前面说的<code>file</code>字段，<code>sname</code>字段内容还是未填充。</p>
+<h4 id="仔细再看下rfc">仔细再看下RFC</h4>
+<p>首先我们看下option 55的描述：</p>
+<p><em>This option is used by a DHCP client to request values for specified configuration parameters.  The list of requested parameters is specified as n octets, where each octet is a valid DHCP option code as defined in this document.</em></p>
+<p><em>The client MAY list the options in order of preference.  The DHCP server is not required to return the options in the requested order, but MUST try to insert the requested options in the order requested by the client.</em><br>
+<em>The code for this option is 55.  Its minimum length is 1.</em><br>
+Code   Len   Option Codes<br>
++-----+-----+-----+-----+---<br>
+|  55 |  n  |  c1 |  c2 | ...<br>
++-----+-----+-----+-----+---</p>
+<p>在RFC中也没有明确说明，Client 发送的<code>option 55</code>内请求的<code>parameter</code>，Server必须要做应答。<br>
+也就是说<code>DHCP Client</code>在<code>option 55</code>中请求了<code>option 66 67</code>，<code>DHCP Server</code>可以不用<code>option 66 、67</code>进行回应或者完全不回应。</p>
+<p><code>DHCP Server</code>可以使用<code>sname</code>以及<code>file</code>回应，但是如果同时使用<code>option 66、67</code>以及<code>sname、file</code>进行回应，其中的值还不一样，采用哪一个则是客户端的行为了。</p>
+<figure data-type="image" tabindex="8"><img src="http://www.behemoth.icu/img/20200414225630.png" alt="P8" loading="lazy"></figure>
+<h5 id="再仔细看报文">再仔细看报文</h5>
+<figure data-type="image" tabindex="9"><img src="http://www.behemoth.icu/img/20200414225640.png" alt="P9" loading="lazy"></figure>
+<p>在报文中我们没有看到<code>sname</code>填充任何内容，也没看到<code>option 66</code>。只有一个<code>option 150</code>里携带TFTP服务器地址了（这个<code>option 150</code>在<code>DHCP Discovery</code>中的<code>request parameter</code>中也携带了）。</p>
+<p><code>option 150</code>又是个啥呢？</p>
+<p>我们再看看<code>RFC5859</code>中关于该字段作用的描述：<br>
+<em>Voice over IP (VoIP) devices, such as IP phones, have a need to download their configuration from a configuration server on the  network.  There are two commonly accepted methods to discover this server via DHCP; the &quot;sname&quot; field in the DHCP header [RFC2131] and the &quot;TFTP Server Name&quot; option (66) [RFC2132].  Both of these sources of information, however, contain the TFTP server's hostname.  That hostname must then be translated to an IP address.  The usual method to accomplish this would be DNS [RFC1034].  This means the firmware in a VoIP device (with possibly limited flash, memory, and/or   processing resources) would need to implement the DNS protocol in order to perform this translation.  This would also introduce an  additional unnecessary point of failure whereby the device is dependent on the DNS server infrastructure in order to boot up and  communicate with its call agent.</em></p>
+<p><em>In order to eliminate DNS as a point of failure and to keep the firmware in such a VoIP device to a minimum, the &quot;VoIP Configuration Server Address&quot; option (150) was introduced.  This option allows the</em></p>
+<p><em>DHCP server to pass one or more IP addresses of the VoIP configuration server(s) instead of the hostname, thus making the information directly usable by the VoIP device.</em></p>
+<p><em>In cases where other download server address information also appears in the response packet, such as &quot;sname&quot; and &quot;TFTP Server Name&quot;, it is left to the device to decide which piece of information to use.</em></p>
+<p>大意为：</p>
+<p><code>option 66</code>以及<code>sname</code>携带TFTP服务器地址都是以<code>hostname</code>的形式，这就要求VOIP电话的软件还得支持DNS解析，如果不支持DNS解析就无法得到配置文件存放的TFTP服务器IP地址，导致获取配置文件失败。</p>
+<p>为解决该问题，<code>option 150</code>直接携带TFTP 服务器IP地址，这样就不存在不支持DNS解析<code>option 66</code>或者<code>sname</code>携带的<code>hostname</code>失败的问题了。</p>
+<p>报文中的例子，DHCP服务器使用<code>file</code>字段以及<code>option 150</code>告知了<code>DHC Client</code>配置文件所在IP地址以及文件名称。</p>
+<p>所以这么来看，客户端在请求配置文件时携带的相关参数有：</p>
+<ol>
+<li><code>sname</code></li>
+<li><code>file</code></li>
+<li><code>option 66 TFTP server name</code></li>
+<li><code>option 67 Bootfile name</code></li>
+<li><code>option 150 TFTP server address</code></li>
+</ol>
+<p>但是DHCP服务器具体如何回应是DHCP服务器端的实现了。</p>
+<h3 id="其它相关">其它相关</h3>
+<p>聊点其它相关的，现在一些园区网解决方案中会有这样一些概念：</p>
+<ol>
+<li>零配置启动</li>
+<li>设备自动上线</li>
+<li>自动注册</li>
+</ol>
+<p>其实这些方案中的一些实现方式还是通过<code>DHCP option</code>来实现，就如同AP通过<code>DHCP option</code>获取AC地址一样，只不过是新的<code>DHCP option</code>或者厂家自定义option。</p>
+<p>DHCP全称 <code>Dynamic Host Configuration Protocol</code>，200多个option，它能够做的远远比我们日常接触到的要多，不只是给主机下发个IP地址、网关、DNS，人家叫动态主机配置，可没说是动态主机IP地址配置。</p>
+<p>具体DHCP option有哪些呢？有兴趣的可以搜下这个标题：<br>
+<strong>Dynamic Host Configuration Protocol (DHCP) and Bootstrap Protocol (BOOTP) Parameters</strong></p>
+<p>用百度搜索也可以，请认准 https://www.iana.org/ 。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%BF%AB%E9%80%9F%E9%85%8D%E7%BD%AE%E8%AE%BE%E5%A4%87">如何快速配置设备</a></li>
+<li><a href="#%E8%87%AA%E5%8A%A8%E8%8E%B7%E5%8F%96%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E7%9A%84%E6%96%B9%E5%BC%8F">自动获取配置文件的方式</a>
+<ul>
+<li><a href="#%E9%9C%80%E6%B1%82">需求</a></li>
+<li><a href="#%E5%85%B6%E5%AE%83%E6%96%B9%E5%BC%8F">其它方式</a></li>
+</ul>
+</li>
+<li><a href="#dhcp-option-66-67">DHCP Option 66 67</a>
+<ul>
+<li><a href="#%E7%9B%B8%E5%85%B3%E5%AD%97%E6%AE%B5">相关字段</a></li>
+<li><a href="#%E8%8E%B7%E5%8F%96%E8%BF%87%E7%A8%8B">获取过程</a></li>
+<li><a href="#%E4%BB%94%E7%BB%86%E5%86%8D%E7%9C%8B%E4%B8%8Brfc">仔细再看下RFC</a>
+<ul>
+<li><a href="#%E5%86%8D%E4%BB%94%E7%BB%86%E7%9C%8B%E6%8A%A5%E6%96%87">再仔细看报文</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%85%B6%E5%AE%83%E7%9B%B8%E5%85%B3">其它相关</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://behemothes.github.io/Behemothes/post/jing-zi-zhe-ge-wen-ti-zen-me-gao-a-lai-hui-lu-jing-bu-yi-zhi/">
+              <h3 class="post-title">
+                靓仔，这个问题怎么搞啊（来回路径不一致）
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://behemothes.github.io/Behemothes//atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
